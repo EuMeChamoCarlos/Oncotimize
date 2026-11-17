@@ -5,6 +5,7 @@ import Agenda from './paginas/Agenda'
 import EmBreve from './paginas/EmBreve'
 import Login from './paginas/Login'
 import PlanoDoDia from './paginas/PlanoDoDia'
+import Protocolos from './paginas/Protocolos'
 
 export default function App() {
   return (
@@ -16,7 +17,7 @@ export default function App() {
           {/* Cada tela substitui o EmBreve na sua fase (MEMORIA.md, seção 4). */}
           <Route path="/plano-do-dia" element={<PlanoDoDia />} />
           <Route path="/agenda" element={<Agenda />} />
-          <Route path="/protocolos" element={<EmBreve titulo="Protocolos" fase={4} />} />
+          <Route path="/protocolos" element={<Protocolos />} />
           <Route path="/prescricoes" element={<EmBreve titulo="Prescrições" fase={5} />} />
         </Route>
       </Route>

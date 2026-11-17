@@ -79,6 +79,12 @@ input {
   font: inherit;
 }
 
+/* Links na cor da identidade (o roxo de "visitado" do navegador destoava). */
+a {
+  color: var(--petroleo);
+  text-underline-offset: 3px;
+}
+
 /* ---------- Login ---------- */
 
 .acesso {

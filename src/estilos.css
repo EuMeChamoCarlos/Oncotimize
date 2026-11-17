@@ -868,6 +868,85 @@ textarea {
   }
 }
 
+/* ---------- Consulta de protocolos (fase 4) ---------- */
+
+.protocolos {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--aco);
+}
+
+.protocolos > li {
+  border-bottom: 1px solid var(--aco);
+}
+
+.protocolos summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  padding: 0.75rem 0.25rem;
+  cursor: pointer;
+}
+
+.protocolo-dados,
+.protocolo-progresso {
+  display: flex;
+  flex-direction: column;
+}
+
+.protocolo-dados span,
+.protocolo-progresso span,
+.detalhe-linha {
+  font-size: var(--t-pequeno);
+  color: var(--tinta-suave);
+}
+
+.protocolo-progresso {
+  text-align: right;
+}
+
+.protocolos details[open] {
+  padding-bottom: 1rem;
+}
+
+.aplicacoes {
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.aplicacoes li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) auto;
+  align-items: center;
+  gap: 0.25rem 1rem;
+  padding: 0.5rem 0.75rem;
+  border-top: 1px solid var(--aco);
+  background: var(--branco);
+}
+
+.aplicacoes .detalhe-linha {
+  display: block;
+}
+
+@media (max-width: 760px) {
+  .protocolo-progresso {
+    text-align: left;
+  }
+
+  .aplicacoes li {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .aplicacoes li > span:nth-child(2) {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
+
 /* ---------- Telas estreitas ---------- */
 
 @media (max-width: 760px) {

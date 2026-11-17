@@ -72,6 +72,31 @@ export interface Otimizacao {
   alocacoes: { codigoPrescricao: string; apresentacaoId: string; numeroFrasco: number; fracao: number; volumeMg: number }[]
 }
 
+/** ProtocoloController: protocolo do paciente com os quimioterápicos e todas as aplicações. */
+export interface Protocolo {
+  id: string
+  codigoProtocolo: string
+  medicacaoSubtipo: string
+  grupo: string | null
+  dataInicio: string
+  ciclos: number
+  diasIntervalo: number
+  intervaloMinimoDias: number
+  totalAplicacoes: number
+  medicamentos: { medicamentoId: string; doseMg: number; via: string; diasAplicacao: string }[]
+  aplicacoes: {
+    id: string
+    numero: number
+    cicloNumero: number
+    diaCiclo: number
+    dataPrevista: string
+    dataAgendada: string
+    dataReal: string | null
+    status: 'AGENDADA' | 'REALIZADA' | 'CANCELADA'
+    motivoAlteracao: string | null
+  }[]
+}
+
 /** AplicacaoController: GET /api/aplicacoes?data= (agenda do dia, pela data agendada). */
 export interface AplicacaoDoDia {
   id: string

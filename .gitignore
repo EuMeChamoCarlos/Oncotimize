@@ -1,0 +1,3 @@
+# Link local da skill (caminho absoluto desta máquina); a skill versionada fica em .agents/skills
+.claude/skills/
+.claude/settings.local.json

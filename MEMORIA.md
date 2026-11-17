@@ -68,7 +68,7 @@ Oncotimize/
 |---|---|---|---|
 | 0 | `docs/memoria-e-claude` | `CLAUDE.md`, `MEMORIA.md`, `.gitignore` e a skill `frontend-design` (`.agents/`, `skills-lock.json`) | validada e commitada (`e584d87`) em 2026-11-16; `main` local aponta para ela (sem push) |
 | 1 | `feature/login` | Vite + login + layout + rota protegida | implementada em 2026-11-16 (build ok; testada no navegador contra a API local: erro de senha, login, recarregar, token inválido, volta à tela pedida, sair, 375 px); validada pelo autor e commitada em 2026-11-16 na `feature/login` (sem push; falta levar ao `main`) |
-| 2 | `feature/plano-do-dia` | Plano do dia (farmácia) | a fazer; depende da lacuna (a) |
+| 2 | `feature/plano-do-dia` | Plano do dia (farmácia): filtro por medicamento e data na URL (`?medicamento=&data=`), tabela das prescrições do dia com a origem de cada dose, barras de custo (por paciente × com o plano) e economia, frascos desenhados com uma faixa por prescrição e a sobra em âmbar, gerar/confirmar (diálogo)/recusar (diálogo com motivo) só para ADMIN | implementada em 2026-11-17 a partir da `feature/login`; build ok; testada no navegador só como perfil de consulta (Paclitaxel 01/03/2027). O agente não testou as ações de ADMIN (a promoção do usuário de teste foi bloqueada); revisão independente com 13 achados confirmados e corrigidos; validada pelo autor e commitada em 2026-11-17 na `feature/plano-do-dia` (sem push). Precisa da API nas branches `feature/listar-otimizacoes` + `feature/prescricoes-do-dia` (ou no `master` depois do merge) |
 | 3 | `feature/agenda` | Sugestões de remarcação + não apto | a fazer; depende da lacuna (b) |
 | 4 | `feature/consulta-protocolos` | Protocolos e aplicações (só leitura) | a fazer |
 | 5 | `feature/consulta-prescricoes` | Prescrições (só leitura) | a fazer |
@@ -133,13 +133,15 @@ medicamentos e de frascos.
 
 | | Lacuna | Efeito no front | Situação |
 |---|---|---|---|
-| a | Não há `GET /api/otimizacoes?medicamentoId=&data=`; cada `POST` cria um plano novo | ao recarregar, o front não acha o plano do dia (nem se já foi confirmado), e cada "Gerar" duplica o plano | necessária na fase 2; branch na API quando o autor autorizar |
+| a | Não há `GET /api/otimizacoes?medicamentoId=&data=`; cada `POST` cria um plano novo | ao recarregar, o front não acha o plano do dia (nem se já foi confirmado), e cada "Gerar" duplica o plano | **resolvida** (2026-11-17, API `39cc212` na `feature/listar-otimizacoes`, sem push; a fase 2 precisa da API rodando nessa branch ou no `master` depois do merge): `GET` paginado, mais recente primeiro; `POST` dá 409 se o dia já tem plano CONFIRMADO. **Na fase 2, o front abre o item CONFIRMADA da lista, se houver; senão, o mais recente** (um CONCLUIDA criado antes da confirmação de outro pode vir no topo) |
 | b | `POST /api/aplicacoes/{id}/remarcacao` não marca as prescrições da aplicação como `NAO_APTO` | a otimização do dia ainda contaria o paciente; no front, seriam um `PUT /api/prescricoes/{id}` (corpo completo) por medicamento e depois o `POST`, sem transação | necessária na fase 3; proposta: a remarcação marca as prescrições daquela data na mesma transação |
+| c | **Datas diferentes para "prescrição do dia"** (achado da revisão da fase 2): `GET /api/prescricoes?data=` filtra por `dataPrescricao`; o `OtimizarDiaUseCase` (`PrescricaoRepository.buscarDoDia`) usa a `dataAgendada` da aplicação (e `dataPrescricao` só sem aplicação). Aceitar uma remarcação muda só a `dataAgendada` | depois de uma remarcação, a tabela mostra pacientes diferentes dos que entram no plano | **resolvida na API** (decisão do autor em 2026-11-17: "listagem como o solver"; branch `feature/prescricoes-do-dia`, a partir da `feature/listar-otimizacoes`): `?data=` agora segue a data agendada da aplicação para as APTO (igual ao `buscarDoDia`) e a `dataPrescricao` para as NAO_APTO e o legado (o não apto fica no dia em que foi avaliado). A `dataPrescricao` continua sendo a data de emissão. No front, um código que só aparece no plano (plano gerado antes de a aplicação sair do dia) entra na tabela como "Saiu deste dia depois do plano; gere de novo" |
+| — | Economia negativa possível: a linha de base "sem compartilhar" resolve cada paciente com o estoque cheio, ignorando o que os outros consomem | com estoque curto, a economia pode vir negativa | o front mostra "O plano custa X a mais que a linha de base…"; avaliar na API se a linha de base deve respeitar o estoque (afeta a métrica do artigo) |
 | — | CORS | já libera `localhost:5173` e `3000` | ok, nada a fazer |
 | — | Nomes de medicamento e frasco ausentes nas respostas; sugestões sem filtro por medicamento | resolvido no front | sem mudança na API |
 
-**Atenção (2026-11-16):** a API tinha trabalho em andamento na branch `feature/entidades-sem-setters` (não commitada).
-As branches das lacunas (a) e (b) partem do `master` depois que esse trabalho for validado e mesclado.
+**Base das lacunas (2026-11-17):** a `feature/entidades-sem-setters` foi mesclada no `master` da API (PR #30, `40bca50`).
+Ela só tirou setters; **não** resolve (a) nem (b). As branches das lacunas partem desse `master`.
 
 ## 7. Protótipos do autor (`Downloads\Oncotimize.pdf`, feitos às pressas)
 
@@ -168,7 +170,7 @@ Administração), cabeçalho com usuário e perfil.
 
 ## 9. Perguntas em aberto
 
-- **Moeda na tela:** os custos do seed são fictícios e os números de Gê estão em US$; o protótipo de relatórios usa R$.
+- **Moeda na tela (provisório: R$, em `src/util/formatos.ts`, um lugar só):** os custos do seed são fictícios e os números de Gê estão em US$; o protótipo de relatórios usa R$.
 - **Imagens dos protótipos:** se o visual deles for a referência, exportar as telas em PNG.
 - **Fonte na defesa:** a Atkinson Hyperlegible Next vem do Google Fonts; sem internet, cai para a fonte do sistema.
   Se a apresentação for offline, baixar a fonte para `public/` (sem dependência nova).

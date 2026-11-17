@@ -327,12 +327,12 @@ export default function Agenda() {
           </button>
           {/* Campo de data nativo: um clique abre o calendário do navegador para escolher qualquer dia. */}
           <CampoData className="agenda-dia-campo" rotulo="Escolher o dia" valor={dia} onMudar={irPara} />
-          <span className="agenda-dia-nome" aria-live="polite">
-            {DIA_SEMANA_LONGO.format(paraData(dia))}
-          </span>
           <button type="button" className="botao-icone" aria-label="Próximo dia" onClick={() => irPara(somarDias(dia, 1))}>
             ›
           </button>
+          <span className="agenda-dia-nome" aria-live="polite">
+            {DIA_SEMANA_LONGO.format(paraData(dia))}
+          </span>
         </div>
       </div>
 
@@ -345,7 +345,14 @@ export default function Agenda() {
             aria-label={`${DIA_LONGO.format(paraData(d))}: ${contagem[d] ?? 'carregando'} ${contagem[d] === 1 ? 'paciente' : 'pacientes'}`}
             onClick={() => irPara(d)}
           >
-            <span>{diaCurto(d)}</span>
+            {/* Em tela estreita o "/mês" some (.semana-mes); o aria-label tem a data completa. */}
+            <span className="semana-dia">
+              <span>{DIA_SEMANA.format(paraData(d)).replace('.', '')}</span>{' '}
+              <span>
+                {formatarData(d).slice(0, 2)}
+                <span className="semana-mes">{formatarData(d).slice(2, 5)}</span>
+              </span>
+            </span>
             <strong>{contagem[d] ?? '–'}</strong>
             <span className="semana-legenda">{contagem[d] === 1 ? 'paciente' : 'pacientes'}</span>
           </button>

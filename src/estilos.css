@@ -1,5 +1,7 @@
-/* Identidade do Oncotimize (fase 1). Tokens reaproveitados por todas as telas. */
+/* Identidade do Oncotimize (fase 1; tokens consolidados no refino visual de 2026-11-17).
+   Todas as telas usam só estes tokens: cor, espaço, tipo, raio e altura de controle. */
 :root {
+  /* cores */
   --petroleo: #123c44;
   --petroleo-sombra: #0c2a30;
   --vidro: #f5f7f7;
@@ -14,6 +16,8 @@
   --ambar-texto: #6b4309;
   --erro: #a3271f;
   --erro-fundo: #fbeceb;
+  --ok: #1f5c3a;
+  --ok-fundo: #dcefe4;
 
   /* frasco do login (sobre o petróleo) */
   --dose-1: #e6eeef;
@@ -23,14 +27,32 @@
   --aluminio-escuro: #8fa1a5;
   --vidro-borda: #c9d6d8;
 
+  /* espaço: escala de 4 px */
+  --e-1: 0.25rem;
+  --e-2: 0.5rem;
+  --e-3: 0.75rem;
+  --e-4: 1rem;
+  --e-5: 1.5rem;
+  --e-6: 2rem;
+  --e-7: 2.5rem;
+
+  /* tipo: escala 1,25 a partir de 16 px */
   --fonte: 'Atkinson Hyperlegible Next', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  /* escala 1,25 a partir de 16 px */
   --t-pequeno: 0.875rem;
+  --t-base: 1rem;
   --t-m: 1.25rem;
+  --t-g: 1.563rem;
   --t-gg: 2.441rem;
   --t-marca: 3.815rem;
 
+  /* raios */
   --raio: 6px;
+  --raio-pequeno: 2px;
+  --raio-pilula: 999px;
+
+  /* altura mínima de botões e campos no toque (44 px) */
+  --alvo: 2.75rem;
+
   color-scheme: light;
 }
 
@@ -75,7 +97,9 @@ h1 {
 }
 
 button,
-input {
+input,
+select,
+textarea {
   font: inherit;
 }
 
@@ -83,6 +107,17 @@ input {
 a {
   color: var(--petroleo);
   text-underline-offset: 3px;
+}
+
+a:hover {
+  color: var(--petroleo-sombra);
+  text-decoration-thickness: 2px;
+}
+
+/* Um estado desabilitado para todos os botões. */
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* ---------- Login ---------- */
@@ -96,11 +131,11 @@ a {
 .acesso-painel {
   background: var(--petroleo);
   color: var(--vidro);
-  padding: clamp(2rem, 5vw, 4.5rem);
+  padding: clamp(var(--e-6), 5vw, 4.5rem);
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 1.5rem;
+  gap: var(--e-5);
 }
 
 .acesso-marca {
@@ -119,7 +154,7 @@ a {
 .frasco {
   width: min(100%, 22rem);
   height: auto;
-  margin-block: 1rem;
+  margin-block: var(--e-4);
 }
 
 .frasco-dose {
@@ -134,6 +169,7 @@ a {
   }
 }
 
+/* Unidades do SVG (viewBox), não da página: 15 px acompanham a escala do desenho. */
 .frasco-rotulo {
   fill: var(--vidro);
   font-size: 15px;
@@ -152,7 +188,7 @@ a {
 .acesso-formulario {
   display: grid;
   place-items: center;
-  padding: clamp(2rem, 5vw, 4.5rem) 1rem;
+  padding: clamp(var(--e-6), 5vw, 4.5rem) var(--e-4);
   background: var(--branco);
 }
 
@@ -163,52 +199,128 @@ a {
 }
 
 .acesso-formulario h1 {
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--e-5);
 }
+
+/* ---------- Campos ---------- */
 
 label {
   font-weight: 600;
-  margin-bottom: 0.375rem;
+  margin-bottom: var(--e-2);
 }
 
-input {
-  padding: 0.75rem 0.875rem;
-  margin-bottom: 1.25rem;
+input,
+select,
+textarea {
+  min-height: var(--alvo);
+  padding: var(--e-2) var(--e-3);
   border: 1.5px solid var(--aco-escuro);
   border-radius: var(--raio);
   background: var(--branco);
   color: var(--tinta);
 }
 
-input:focus-visible {
+input {
+  margin-bottom: var(--e-4);
+}
+
+input:hover,
+select:hover,
+textarea:hover {
+  border-color: var(--tinta-suave);
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
   outline-offset: 0;
   border-color: var(--petroleo);
 }
 
-.botao-principal {
-  padding: 0.8rem 1rem;
-  border: 0;
+textarea {
+  width: 100%;
+  resize: vertical;
+  margin-bottom: var(--e-4);
+}
+
+/* ---------- Botões ---------- */
+
+.botao-principal,
+.botao-secundario {
+  min-height: var(--alvo);
+  padding: var(--e-2) var(--e-4);
   border-radius: var(--raio);
-  background: var(--petroleo);
-  color: var(--vidro);
   font-weight: 700;
   cursor: pointer;
 }
 
+.botao-principal {
+  border: 1.5px solid var(--petroleo);
+  background: var(--petroleo);
+  color: var(--vidro);
+}
+
 .botao-principal:hover:not(:disabled) {
+  border-color: var(--petroleo-sombra);
   background: var(--petroleo-sombra);
 }
 
-.botao-principal:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.botao-secundario {
+  border: 1.5px solid var(--petroleo);
+  background: var(--branco);
+  color: var(--petroleo);
 }
 
-.mensagem {
-  padding: 0.75rem 0.875rem;
-  margin-bottom: 1.25rem;
+.botao-secundario:hover:not(:disabled) {
+  background: var(--vidro);
+}
+
+.botao-pequeno {
+  min-height: 2.25rem;
+  padding: var(--e-1) var(--e-3);
+  font-size: var(--t-pequeno);
+}
+
+.botao-icone {
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1.5px solid var(--aco-escuro);
   border-radius: var(--raio);
-  border-left: 4px solid;
+  background: var(--branco);
+  color: var(--tinta);
+  font-size: var(--t-m);
+  line-height: 1;
+  cursor: pointer;
+}
+
+.botao-icone:hover {
+  border-color: var(--petroleo);
+  background: var(--vidro);
+}
+
+.botao-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--petroleo);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.botao-link:hover:not(:disabled) {
+  color: var(--petroleo-sombra);
+  text-decoration-thickness: 2px;
+}
+
+/* ---------- Mensagens: borda inteira no tom da mensagem, sem faixa lateral ---------- */
+
+.mensagem {
+  padding: var(--e-3) var(--e-4);
+  margin-bottom: var(--e-4);
+  border: 1px solid;
+  border-radius: var(--raio);
 }
 
 .mensagem-erro {
@@ -223,26 +335,32 @@ input:focus-visible {
   color: var(--ambar-texto);
 }
 
+.mensagem-sucesso {
+  background: var(--ok-fundo);
+  border-color: var(--ok);
+  color: var(--ok);
+}
+
 /* ---------- Casca autenticada ---------- */
 
 .abrindo {
-  padding: 2rem;
+  padding: var(--e-6);
   color: var(--tinta-suave);
 }
 
 .pular {
   position: absolute;
-  left: 1rem;
+  left: var(--e-4);
   top: -4rem;
   z-index: 10;
-  padding: 0.5rem 0.875rem;
+  padding: var(--e-2) var(--e-4);
   background: var(--branco);
   color: var(--petroleo);
   border-radius: var(--raio);
 }
 
 .pular:focus {
-  top: 1rem;
+  top: var(--e-4);
 }
 
 .casca {
@@ -258,8 +376,8 @@ input:focus-visible {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
-  padding: 1.5rem 1rem;
+  gap: var(--e-6);
+  padding: var(--e-5) var(--e-4);
   background: var(--petroleo);
   color: var(--vidro);
 }
@@ -267,8 +385,8 @@ input:focus-visible {
 .marca {
   display: flex;
   align-items: center;
-  gap: 0.625rem;
-  padding-inline: 0.5rem;
+  gap: var(--e-3);
+  padding-inline: var(--e-2);
   font-size: var(--t-m);
   font-weight: 700;
 }
@@ -280,12 +398,12 @@ input:focus-visible {
 }
 
 .grupo + .grupo {
-  margin-top: 1.25rem;
+  margin-top: var(--e-4);
 }
 
 .grupo-setor {
-  padding-inline: 0.5rem;
-  margin-bottom: 0.25rem;
+  padding-inline: var(--e-2);
+  margin-bottom: var(--e-1);
   font-size: var(--t-pequeno);
   color: var(--dose-2);
 }
@@ -296,9 +414,10 @@ input:focus-visible {
   padding: 0;
 }
 
+/* A faixa de 3 px é o indicador da tela atual (navegação), não um cartão. */
 .lateral nav a {
   display: block;
-  padding: 0.5rem 0.5rem 0.5rem 0.75rem;
+  padding: var(--e-2) var(--e-2) var(--e-2) var(--e-3);
   border-left: 3px solid transparent;
   border-radius: 0 var(--raio) var(--raio) 0;
   color: var(--dose-1);
@@ -307,6 +426,7 @@ input:focus-visible {
 
 .lateral nav a:hover {
   background: rgba(255, 255, 255, 0.06);
+  color: var(--branco);
 }
 
 .lateral nav a.active {
@@ -316,9 +436,14 @@ input:focus-visible {
   color: var(--branco);
 }
 
+/* Sobre o petróleo o âmbar escuro fica no limite (3:1); o claro dá 5,3:1. */
+.lateral :focus-visible {
+  outline-color: var(--ambar-claro);
+}
+
 .sessao {
   margin-top: auto;
-  padding: 1rem 0.5rem 0;
+  padding: var(--e-4) var(--e-2) 0;
   border-top: 1px solid rgba(255, 255, 255, 0.15);
 }
 
@@ -334,8 +459,9 @@ input:focus-visible {
 }
 
 .botao-sair {
-  margin-top: 0.75rem;
-  padding: 0.375rem 0.875rem;
+  min-height: 2.25rem;
+  margin-top: var(--e-3);
+  padding: var(--e-1) var(--e-4);
   border: 1.5px solid var(--dose-3);
   border-radius: var(--raio);
   background: transparent;
@@ -344,11 +470,12 @@ input:focus-visible {
 }
 
 .botao-sair:hover {
+  border-color: var(--dose-2);
   background: rgba(255, 255, 255, 0.08);
 }
 
 .conteudo {
-  padding: clamp(1.5rem, 4vw, 3rem);
+  padding: clamp(var(--e-5), 4vw, 3rem);
   max-width: 75rem;
 }
 
@@ -357,7 +484,7 @@ input:focus-visible {
 }
 
 .pagina h1 {
-  margin-bottom: 0.75rem;
+  margin-bottom: var(--e-3);
 }
 
 .nota {
@@ -365,29 +492,13 @@ input:focus-visible {
   max-width: 65ch;
 }
 
-/* ---------- Telas de trabalho (fase 2 em diante) ---------- */
-
-select,
-textarea {
-  font: inherit;
-  padding: 0.75rem 0.875rem;
-  border: 1.5px solid var(--aco-escuro);
-  border-radius: var(--raio);
-  background: var(--branco);
-  color: var(--tinta);
-}
-
-textarea {
-  width: 100%;
-  resize: vertical;
-  margin-bottom: 1.25rem;
-}
+/* ---------- Telas de trabalho ---------- */
 
 .filtros {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem 1.5rem;
-  margin-block: 1.5rem;
+  gap: var(--e-4) var(--e-5);
+  margin-block: var(--e-5);
 }
 
 .campo {
@@ -401,25 +512,26 @@ textarea {
 }
 
 .vazio {
-  padding-block: 1rem;
+  padding-block: var(--e-4);
   color: var(--tinta-suave);
 }
 
 .bloco {
-  margin-top: 2.5rem;
+  margin-top: var(--e-7);
 }
 
 .bloco h2 {
-  font-size: var(--t-m);
-  margin-bottom: 1rem;
+  font-size: var(--t-g);
+  line-height: 1.2;
+  margin-bottom: var(--e-4);
 }
 
 .plano-cabecalho {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 0.5rem 1rem;
-  margin-bottom: 1rem;
+  gap: var(--e-2) var(--e-4);
+  margin-bottom: var(--e-4);
 }
 
 .bloco .plano-cabecalho h2 {
@@ -427,79 +539,50 @@ textarea {
 }
 
 .bloco .nota {
-  margin-bottom: 1rem;
+  margin-bottom: var(--e-4);
 }
 
-.situacao {
-  padding: 0.2rem 0.6rem;
-  border-radius: 999px;
+/* A nota de quem só consulta fica no lugar das ações, com o mesmo respiro. */
+.bloco > .nota:last-child {
+  margin-top: var(--e-5);
+  margin-bottom: 0;
+}
+
+.situacao,
+.etiqueta {
+  padding: var(--e-1) var(--e-3);
+  border-radius: var(--raio-pilula);
   background: var(--aco);
+  color: var(--tinta);
   font-size: var(--t-pequeno);
   font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
-.situacao-confirmada {
-  background: #dcefe4;
-  color: #1f5c3a;
+.situacao-confirmada,
+.etiqueta-ok {
+  background: var(--ok-fundo);
+  color: var(--ok);
 }
 
-.situacao-recusada {
+.situacao-recusada,
+.etiqueta-nao-apto {
   background: var(--erro-fundo);
   color: var(--erro);
 }
 
-.mensagem-sucesso {
-  background: #e6f3ec;
-  border-color: #2f6b4f;
-  color: #1f5c3a;
-}
-
-.tabela-rolagem {
-  overflow-x: auto;
-}
-
-.tabela {
-  width: 100%;
-  border-collapse: collapse;
-  background: var(--branco);
-}
-
-.tabela th,
-.tabela td {
-  padding: 0.625rem 0.75rem;
-  border-bottom: 1px solid var(--aco);
-  text-align: left;
-  vertical-align: top;
-}
-
-.tabela thead th {
-  border-bottom: 2px solid var(--aco-escuro);
-  font-size: var(--t-pequeno);
-  font-weight: 600;
-  color: var(--tinta-suave);
-}
-
-.tabela tbody th {
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.tabela .numero {
-  text-align: right;
-  white-space: nowrap;
-}
-
-.nao-apto {
-  color: var(--erro);
-  font-weight: 600;
+.etiqueta-aviso {
+  background: var(--ambar-fundo);
+  color: var(--ambar-texto);
 }
 
 .amostra {
   display: inline-block;
   width: 0.75rem;
   height: 0.75rem;
-  margin-right: 0.5rem;
-  border-radius: 2px;
+  margin-right: var(--e-2);
+  border-radius: var(--raio-pequeno);
   vertical-align: -0.05em;
 }
 
@@ -510,13 +593,13 @@ textarea {
 .frascos {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
-  gap: 1.5rem;
+  gap: var(--e-5);
 }
 
 .frasco-plano {
   display: grid;
   grid-template-columns: 7.5rem 1fr;
-  gap: 0.875rem;
+  gap: var(--e-4);
   align-items: start;
   margin: 0;
 }
@@ -537,8 +620,8 @@ textarea {
 
 .frasco-plano-partes {
   display: grid;
-  gap: 0.25rem;
-  margin: 0.5rem 0 0;
+  gap: var(--e-1);
+  margin: var(--e-2) 0 0;
   padding: 0;
   list-style: none;
   font-size: var(--t-pequeno);
@@ -551,32 +634,19 @@ textarea {
 .acoes {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
-  margin-top: 1.75rem;
+  gap: var(--e-3);
+  margin-top: var(--e-5);
 }
 
-.botao-secundario {
-  padding: 0.8rem 1rem;
-  border: 1.5px solid var(--petroleo);
-  border-radius: var(--raio);
-  background: var(--branco);
-  color: var(--petroleo);
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.botao-secundario:hover:not(:disabled) {
-  background: var(--vidro);
-}
-
-.botao-secundario:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.acoes-linha {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e-2);
 }
 
 .dialogo {
   max-width: min(32rem, calc(100vw - 2rem));
-  padding: 1.5rem;
+  padding: var(--e-5);
   border: 0;
   border-radius: var(--raio);
   color: var(--tinta);
@@ -588,12 +658,12 @@ textarea {
 }
 
 .dialogo h2 {
-  margin-bottom: 0.75rem;
+  margin-bottom: var(--e-3);
   font-size: var(--t-m);
 }
 
 .dialogo p {
-  margin-bottom: 1rem;
+  margin-bottom: var(--e-4);
 }
 
 .dialogo label {
@@ -601,99 +671,64 @@ textarea {
 }
 
 .dialogo .acoes {
-  margin-top: 0.5rem;
-}
-
-.acoes-linha {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.botao-pequeno {
-  padding: 0.4rem 0.75rem;
-  font-size: var(--t-pequeno);
+  margin-top: var(--e-2);
 }
 
 .dialogo input[type='date'] {
   width: 100%;
 }
 
-/* ---------- Agenda do dia e plano enxuto (refeitos em 2026-11-17) ---------- */
+/* ---------- Agenda do dia ---------- */
 
 .agenda-topo {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem 1.5rem;
-  margin-bottom: 1.25rem;
+  gap: var(--e-3) var(--e-5);
+  margin-bottom: var(--e-4);
 }
 
 .agenda-dia {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--e-2);
 }
 
 .agenda-dia-campo {
   margin: 0;
-  padding: 0.4rem 0.6rem;
   font-weight: 600;
   cursor: pointer;
 }
 
 .agenda-dia-nome {
-  min-width: 6.5rem;
+  margin-left: var(--e-1);
   color: var(--tinta-suave);
-}
-
-.botao-icone {
-  width: 2.25rem;
-  height: 2.25rem;
-  border: 1.5px solid var(--aco-escuro);
-  border-radius: var(--raio);
-  background: var(--branco);
-  color: var(--tinta);
-  font-size: 1.25rem;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.botao-link {
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--petroleo);
-  font-weight: 600;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  cursor: pointer;
-}
-
-.botao-link:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
 }
 
 .semana {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 0.375rem;
-  margin-bottom: 1.5rem;
+  gap: var(--e-2);
+  margin-bottom: var(--e-5);
 }
 
 .semana button {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 0.5rem 0.25rem;
+  padding: var(--e-2) var(--e-1);
   border: 1px solid var(--aco);
   border-radius: var(--raio);
   background: var(--branco);
   color: var(--tinta-suave);
   font-size: var(--t-pequeno);
   cursor: pointer;
+}
+
+.semana button:hover:not([aria-current='date']) {
+  border-color: var(--aco-escuro);
+  background: var(--vidro);
 }
 
 .semana button strong {
@@ -711,15 +746,17 @@ textarea {
   color: var(--branco);
 }
 
+/* Sugestão de remarcação: cartão âmbar com borda inteira (era uma faixa lateral). */
 .sugestao {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem 1rem;
-  margin-bottom: 0.75rem;
-  padding: 0.875rem 1rem;
-  border-left: 4px solid var(--ambar);
+  gap: var(--e-3) var(--e-4);
+  margin-bottom: var(--e-3);
+  padding: var(--e-4);
+  border: 1px solid var(--ambar);
+  border-radius: var(--raio);
   background: var(--ambar-fundo);
   color: var(--ambar-texto);
 }
@@ -739,8 +776,8 @@ textarea {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
-  gap: 0.5rem 1rem;
-  padding: 0.75rem 0.25rem;
+  gap: var(--e-2) var(--e-4);
+  padding: var(--e-3) var(--e-1);
   border-bottom: 1px solid var(--aco);
 }
 
@@ -754,56 +791,30 @@ textarea {
   color: var(--tinta-suave);
 }
 
-.etiqueta {
-  padding: 0.15rem 0.6rem;
-  border-radius: 999px;
-  font-size: var(--t-pequeno);
-  font-weight: 600;
-  white-space: nowrap;
-}
-
 .paciente-nota {
   color: var(--ambar-texto);
 }
 
-.etiqueta-neutra {
-  background: var(--aco);
-  color: var(--tinta);
-}
-
-.etiqueta-ok {
-  background: #dcefe4;
-  color: #1f5c3a;
-}
-
-.etiqueta-aviso {
-  background: var(--ambar-fundo);
-  color: var(--ambar-texto);
-}
-
-.etiqueta-nao-apto {
-  background: var(--erro-fundo);
-  color: var(--erro);
-}
-
 .agenda-procurar {
-  margin-top: 1.25rem;
+  margin-top: var(--e-4);
 }
+
+/* ---------- Plano do dia ---------- */
 
 .plano-destaque {
-  font-size: var(--t-g, 1.563rem);
+  font-size: var(--t-m);
   font-weight: 700;
   line-height: 1.2;
 }
 
 .lista-simples {
-  margin: 0.75rem 0 0;
+  margin: var(--e-3) 0 0;
   padding: 0;
   list-style: none;
 }
 
 .lista-simples li {
-  padding: 0.375rem 0;
+  padding: var(--e-2) 0;
   border-bottom: 1px solid var(--aco);
 }
 
@@ -814,16 +825,16 @@ textarea {
 .plano-resumo {
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
-  gap: 1.5rem 2.5rem;
+  gap: var(--e-5) var(--e-7);
   align-items: start;
 }
 
 .plano-numeros .nota {
-  margin: 0.25rem 0 1.25rem;
+  margin: var(--e-1) 0 var(--e-4);
 }
 
 .economia-caixa {
-  padding: 1rem 1.25rem;
+  padding: var(--e-4) var(--e-5);
   border-radius: var(--raio);
   background: var(--branco);
   border: 1px solid var(--aco);
@@ -836,45 +847,13 @@ textarea {
 
 .economia-caixa strong {
   display: block;
-  margin: 0.125rem 0;
+  margin: var(--e-1) 0;
   font-size: var(--t-gg);
   line-height: 1.1;
   color: var(--petroleo);
 }
 
-@media (max-width: 760px) {
-  .plano-resumo {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .agenda-dia-nome {
-    min-width: 0;
-  }
-
-  .semana button {
-    padding: 0.375rem 0;
-  }
-
-  .semana-legenda {
-    display: none; /* o rótulo completo do dia está no aria-label do botão */
-  }
-
-  .pacientes li {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .pacientes li .etiqueta {
-    justify-self: start;
-    white-space: normal;
-  }
-
-  .pacientes li .botao-pequeno {
-    grid-column: 1 / -1;
-    justify-self: start;
-  }
-}
-
-/* ---------- Consulta de protocolos (fase 4) ---------- */
+/* ---------- Consulta de protocolos ---------- */
 
 .protocolos {
   margin: 0;
@@ -887,14 +866,37 @@ textarea {
   border-bottom: 1px solid var(--aco);
 }
 
+/* O display flex tira o triângulo nativo do summary; a seta abaixo devolve a pista de que a linha abre. */
 .protocolos summary {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem 1rem;
-  padding: 0.75rem 0.25rem;
+  gap: var(--e-2) var(--e-4);
+  padding: var(--e-3) var(--e-1) var(--e-3) var(--e-6);
   cursor: pointer;
+}
+
+.protocolos summary::before {
+  content: '';
+  position: absolute;
+  left: var(--e-2);
+  top: 1.35rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-right: 2px solid var(--tinta-suave);
+  border-bottom: 2px solid var(--tinta-suave);
+  transform: rotate(-45deg);
+  transition: transform 150ms ease-out;
+}
+
+.protocolos details[open] > summary::before {
+  transform: rotate(45deg);
+}
+
+.protocolos summary:hover {
+  background: var(--branco);
 }
 
 .protocolo-dados,
@@ -915,11 +917,11 @@ textarea {
 }
 
 .protocolos details[open] {
-  padding-bottom: 1rem;
+  padding-bottom: var(--e-4);
 }
 
 .aplicacoes {
-  margin: 0.5rem 0 0;
+  margin: var(--e-2) 0 0;
   padding: 0;
   list-style: none;
 }
@@ -928,8 +930,8 @@ textarea {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) auto;
   align-items: center;
-  gap: 0.25rem 1rem;
-  padding: 0.5rem 0.75rem;
+  gap: var(--e-1) var(--e-4);
+  padding: var(--e-2) var(--e-3);
   border-top: 1px solid var(--aco);
   background: var(--branco);
 }
@@ -938,7 +940,162 @@ textarea {
   display: block;
 }
 
+/* ---------- Telas estreitas (um bloco só) ---------- */
+
 @media (max-width: 760px) {
+  /* login */
+  .acesso {
+    grid-template-columns: 1fr;
+  }
+
+  .acesso-painel {
+    padding: var(--e-5) var(--e-4);
+    gap: var(--e-3);
+  }
+
+  .acesso-marca {
+    font-size: var(--t-gg);
+  }
+
+  .frasco {
+    width: min(100%, 15rem);
+    margin-block: var(--e-1);
+  }
+
+  .acesso-legenda {
+    font-size: var(--t-pequeno);
+  }
+
+  /* casca: a barra lateral vira um cabeçalho compacto */
+  .casca {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+  }
+
+  .lateral {
+    position: static;
+    height: auto;
+    overflow: visible;
+    gap: var(--e-3);
+    padding: var(--e-4);
+  }
+
+  .lateral nav,
+  .lateral nav ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--e-1) var(--e-2);
+  }
+
+  /* Os setores continuam para o leitor de tela (aria-labelledby), só saem da vista. */
+  .grupo-setor {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .grupo + .grupo {
+    margin-top: 0;
+  }
+
+  .lateral nav a {
+    min-height: var(--alvo);
+    display: flex;
+    align-items: center;
+  }
+
+  .sessao {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--e-1) var(--e-4);
+    padding-top: var(--e-3);
+  }
+
+  .sessao-email {
+    display: none;
+  }
+
+  .botao-sair {
+    min-height: var(--alvo);
+    margin-top: 0;
+    margin-left: auto;
+  }
+
+  .conteudo {
+    padding: var(--e-5) var(--e-4);
+  }
+
+  /* alvos de toque e filtros */
+  .botao-pequeno {
+    min-height: var(--alvo);
+  }
+
+  .botao-icone {
+    width: var(--alvo);
+    height: var(--alvo);
+  }
+
+  .campo {
+    flex: 1 1 100%;
+  }
+
+  /* plano do dia */
+  .plano-resumo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* agenda: setas e data numa linha, o nome do dia embaixo */
+  .agenda-dia {
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+  }
+
+  .agenda-dia-campo {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .agenda-dia-nome {
+    flex-basis: 100%;
+    margin-left: 0;
+  }
+
+  .semana-dia > span {
+    display: block;
+  }
+
+  .semana {
+    gap: var(--e-1);
+  }
+
+  .semana button {
+    padding: var(--e-2) 0;
+  }
+
+  .semana-legenda,
+  .semana-mes {
+    display: none; /* o rótulo completo do dia está no aria-label do botão */
+  }
+
+  .pacientes li {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pacientes li .etiqueta {
+    justify-self: start;
+    white-space: normal;
+  }
+
+  .pacientes li .botao-pequeno {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+
+  /* protocolos */
   .protocolo-progresso {
     text-align: left;
   }
@@ -953,73 +1110,12 @@ textarea {
   }
 }
 
-/* ---------- Telas estreitas ---------- */
-
-@media (max-width: 760px) {
-  .acesso {
-    grid-template-columns: 1fr;
-  }
-
-  .acesso-painel {
-    padding: 1.5rem 1rem;
-    gap: 0.75rem;
-  }
-
-  .acesso-marca {
-    font-size: var(--t-gg);
-  }
-
-  .frasco {
-    width: min(100%, 15rem);
-    margin-block: 0.25rem;
-  }
-
-  .acesso-legenda {
-    font-size: var(--t-pequeno);
-  }
-
-  .casca {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto 1fr;
-  }
-
-  .lateral {
-    position: static;
-    height: auto;
-    overflow: visible;
-    gap: 1rem;
-    padding: 1rem;
-  }
-
-  .lateral nav {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem 1.5rem;
-  }
-
-  .grupo + .grupo {
-    margin-top: 0;
-  }
-
-  .sessao {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.25rem 1rem;
-    padding-top: 0.75rem;
-  }
-
-  .botao-sair {
-    margin-top: 0;
-  }
-
-  .conteudo {
-    padding: 1.5rem 1rem;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .frasco-dose {
     animation: none;
+  }
+
+  .protocolos summary::before {
+    transition: none;
   }
 }

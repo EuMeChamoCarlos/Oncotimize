@@ -45,7 +45,7 @@ export default function Layout() {
         </nav>
         <div className="sessao">
           <p className="sessao-nome">{usuario?.name || usuario?.username}</p>
-          {usuario?.name && <p className="sessao-detalhe">{usuario.username}</p>}
+          {usuario?.name && <p className="sessao-detalhe sessao-email">{usuario.username}</p>}
           <p className="sessao-detalhe">{ehAdmin ? 'Administrador: decide planos e remarcações' : 'Consulta: só leitura'}</p>
           <button type="button" className="botao-sair" onClick={sair}>
             Sair

@@ -13,6 +13,7 @@ import { ErroApi } from '../api/cliente'
 import { listarMedicamentos } from '../api/plano'
 import type { AplicacaoDoDia, Medicamento, Prescricao, SugestaoRemarcacao } from '../api/tipos'
 import { useAuth } from '../auth/AuthContext'
+import CampoData from '../componentes/CampoData'
 import Dialogo from '../componentes/Dialogo'
 import { formatarData, formatarMg, formatarMoeda, hojeIso } from '../util/formatos'
 
@@ -325,13 +326,7 @@ export default function Agenda() {
             ‹
           </button>
           {/* Campo de data nativo: um clique abre o calendário do navegador para escolher qualquer dia. */}
-          <input
-            type="date"
-            className="agenda-dia-campo"
-            aria-label="Escolher o dia"
-            value={dia}
-            onChange={(e) => e.target.value && irPara(e.target.value)}
-          />
+          <CampoData className="agenda-dia-campo" rotulo="Escolher o dia" valor={dia} onMudar={irPara} />
           <span className="agenda-dia-nome" aria-live="polite">
             {DIA_SEMANA_LONGO.format(paraData(dia))}
           </span>

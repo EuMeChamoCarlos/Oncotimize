@@ -12,6 +12,7 @@ import {
 } from '../api/plano'
 import type { Frasco, Medicamento, Otimizacao, Prescricao } from '../api/tipos'
 import { useAuth } from '../auth/AuthContext'
+import CampoData from '../componentes/CampoData'
 import Dialogo from '../componentes/Dialogo'
 import FrascoDoPlano, { type ParteDoFrasco } from '../componentes/FrascoDoPlano'
 import {
@@ -193,7 +194,7 @@ export default function PlanoDoDia() {
         </div>
         <div className="campo">
           <label htmlFor="filtro-data">Data</label>
-          <input id="filtro-data" type="date" value={data} required onChange={(e) => mudarFiltro('data', e.target.value)} />
+          <CampoData id="filtro-data" valor={data} onMudar={(v) => mudarFiltro('data', v)} />
         </div>
       </form>
 

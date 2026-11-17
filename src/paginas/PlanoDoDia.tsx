@@ -19,7 +19,6 @@ import {
   formatarDataHora,
   formatarMg,
   formatarMoeda,
-  formatarPercentual,
   hojeIso,
 } from '../util/formatos'
 
@@ -136,7 +135,18 @@ export default function PlanoDoDia() {
   const soNoPlano = [...new Set(plano?.alocacoes.map((a) => a.codigoPrescricao) ?? [])].filter(
     (codigo) => !codigosNaTabela.has(codigo),
   )
-  const codigosComCor = [...aptas.map((p) => p.codigoPrescricao), ...soNoPlano]
+  const codigosNoPlano = new Set(plano?.alocacoes.map((a) => a.codigoPrescricao) ?? [])
+  const naoAptosNoPlano = (dia?.prescricoes ?? [])
+    .filter((p) => p.status === 'NAO_APTO' && codigosNoPlano.has(p.codigoPrescricao))
+    .map((p) => p.codigoPrescricao)
+  const foraDoPlano = (dia?.prescricoes ?? [])
+    .filter((p) => p.status === 'NAO_APTO' && !codigosNoPlano.has(p.codigoPrescricao))
+    .map((p) => p.codigoPrescricao)
+  const codigosComCor = [
+    ...aptas.map((p) => p.codigoPrescricao),
+    ...naoAptosNoPlano,
+    ...soNoPlano,
+  ]
   const cores = new Map(codigosComCor.map((codigo, i) => [codigo, CORES[i % CORES.length]]))
 
   function confirmar(evento: FormEvent) {
@@ -163,9 +173,6 @@ export default function PlanoDoDia() {
     <section className="pagina plano">
       <title>Plano do dia – Oncotimize</title>
       <h1>Plano do dia</h1>
-      <p className="nota">
-        Escolha o medicamento e a data para ver as prescrições aptas e quais frascos abrir, divididos entre os pacientes.
-      </p>
 
       <form className="filtros" onSubmit={(e) => e.preventDefault()}>
         <div className="campo">
@@ -195,13 +202,10 @@ export default function PlanoDoDia() {
           {erro}
         </p>
       )}
-      {sucesso && (
-        <p className="mensagem mensagem-sucesso" role="status">
-          {sucesso}
-        </p>
-      )}
+      {/* Região viva sempre montada: o leitor de tela anuncia o sucesso quando ele aparece. */}
+      <div aria-live="polite">{sucesso && <p className="mensagem mensagem-sucesso">{sucesso}</p>}</div>
 
-      {!medicamentoId && <p className="vazio">Escolha um medicamento para começar.</p>}
+      {!medicamentoId && <p className="vazio">Escolha um medicamento para ver quais frascos abrir no dia.</p>}
       {carregando && (
         <p className="vazio" role="status">
           Carregando o dia…
@@ -209,101 +213,125 @@ export default function PlanoDoDia() {
       )}
 
       {dia && medicamento && (
-        <>
-          <section className="bloco" aria-labelledby="titulo-prescricoes">
-            <h2 id="titulo-prescricoes">
-              Prescrições de {medicamento.nome} em {formatarData(data)}
+        <section className="bloco plano-dia" aria-labelledby="titulo-plano">
+          <div className="plano-cabecalho">
+            <h2 id="titulo-plano">
+              {medicamento.nome}, {formatarData(data)}
             </h2>
-            {dia.prescricoes.length === 0 && soNoPlano.length === 0 ? (
-              <p className="vazio">Nenhuma prescrição deste medicamento nesta data.</p>
+            {plano && <SituacaoDoPlano plano={plano} />}
+          </div>
+
+          {plano?.status === 'CONCLUIDA' && naoAptosNoPlano.length > 0 && (
+            <p className="mensagem mensagem-aviso" role="status">
+              Este plano inclui {naoAptosNoPlano.join(', ')}, que não {naoAptosNoPlano.length === 1 ? 'está' : 'estão'} mais
+              apto{naoAptosNoPlano.length === 1 ? '' : 's'}.{' '}
+              {aptas.length > 0 ? 'Gere de novo antes de confirmar o preparo.' : 'Não há outro paciente apto no dia: recuse o plano.'}
+            </p>
+          )}
+
+          {!plano &&
+            (aptas.length === 0 ? (
+              <p className="vazio">Nenhum paciente apto para {medicamento.nome} neste dia.</p>
             ) : (
-              <TabelaPrescricoes
-                prescricoes={dia.prescricoes}
-                soNoPlano={soNoPlano}
-                plano={plano}
-                frascos={dia.frascos}
-                cores={cores}
-              />
-            )}
-          </section>
-
-          <section className="bloco" aria-labelledby="titulo-plano">
-            <div className="plano-cabecalho">
-              <h2 id="titulo-plano">Plano de abertura</h2>
-              {plano && <SituacaoDoPlano plano={plano} />}
-            </div>
-
-            {dia.planos.length > 1 && plano && (
-              <p className="nota">
-                {dia.planos.length} planos foram gerados para este dia; aqui aparece{' '}
-                {plano.status === 'CONFIRMADA' ? 'o confirmado' : 'o mais recente'}.
-              </p>
-            )}
-
-            {!plano && (
-              <p className="vazio">
-                {aptas.length === 0
-                  ? 'Não há prescrição apta neste dia, então não há o que otimizar.'
-                  : `Ainda não há plano para este dia. Gere o plano para ver quais frascos abrir para ${aptas.length === 1 ? 'a prescrição apta' : `as ${aptas.length} prescrições aptas`}.`}
-              </p>
-            )}
-
-            {plano && (
               <>
-                <Economia plano={plano} />
-                <h3 className="subtitulo">
-                  Abrir {plano.frascosAbertos.length} {plano.frascosAbertos.length === 1 ? 'frasco' : 'frascos'}
-                </h3>
-                <div className="frascos">
-                  {plano.frascosAbertos.map((aberto) => {
-                    const apresentacao = dia.frascos.find((f) => f.id === aberto.apresentacaoId)
-                    const partes: ParteDoFrasco[] = plano.alocacoes
-                      .filter((a) => a.apresentacaoId === aberto.apresentacaoId && a.numeroFrasco === aberto.numeroFrasco)
-                      .map((a) => ({
-                        codigo: a.codigoPrescricao,
-                        volumeMg: a.volumeMg,
-                        cor: cores.get(a.codigoPrescricao) ?? 'var(--aco-escuro)',
-                      }))
-                    return (
-                      <FrascoDoPlano
-                        key={`${aberto.apresentacaoId}-${aberto.numeroFrasco}`}
-                        rotulo={`Frasco ${aberto.numeroFrasco} de ${formatarMg(aberto.volumeMg)}`}
-                        descricao={apresentacao?.descricaoTasy ?? null}
-                        volumeMg={aberto.volumeMg}
-                        partes={partes}
-                      />
-                    )
-                  })}
-                </div>
+                <p className="plano-destaque">
+                  {aptas.length} {aptas.length === 1 ? 'paciente apto' : 'pacientes aptos'}
+                </p>
+                <ul className="lista-simples">
+                  {aptas.map((p) => (
+                    <li key={p.id}>
+                      {p.codigoPrescricao} <span>{formatarMg(p.doseMg)}</span>
+                    </li>
+                  ))}
+                </ul>
               </>
-            )}
+            ))}
 
-            {ehAdmin ? (
-              <div className="acoes">
-                {(!plano || plano.status === 'RECUSADA') && (
-                  <button type="button" className="botao-principal" onClick={gerar} disabled={!!ocupado || aptas.length === 0}>
-                    {ocupado === 'gerar' ? 'Gerando…' : plano ? 'Gerar de novo' : 'Gerar plano'}
+          {plano && (
+            <div className="plano-resumo">
+              <div className="frascos">
+                {plano.frascosAbertos.map((aberto) => {
+                  const apresentacao = dia.frascos.find((f) => f.id === aberto.apresentacaoId)
+                  const partes: ParteDoFrasco[] = plano.alocacoes
+                    .filter((a) => a.apresentacaoId === aberto.apresentacaoId && a.numeroFrasco === aberto.numeroFrasco)
+                    .map((a) => ({
+                      codigo: a.codigoPrescricao,
+                      volumeMg: a.volumeMg,
+                      cor: cores.get(a.codigoPrescricao) ?? 'var(--aco-escuro)',
+                    }))
+                  return (
+                    <FrascoDoPlano
+                      key={`${aberto.apresentacaoId}-${aberto.numeroFrasco}`}
+                      rotulo={`Frasco ${aberto.numeroFrasco} de ${formatarMg(aberto.volumeMg)}`}
+                      descricao={apresentacao?.descricaoTasy ?? null}
+                      volumeMg={aberto.volumeMg}
+                      partes={partes}
+                    />
+                  )
+                })}
+              </div>
+              <div className="plano-numeros">
+                <p className="plano-destaque">Abrir {resumoFrascos(plano)}</p>
+                <p className="nota">
+                  para {codigosNoPlano.size} {codigosNoPlano.size === 1 ? 'paciente' : 'pacientes'}, com{' '}
+                  {formatarMg(plano.desperdicioMg)} de sobra
+                </p>
+                <div className="economia-caixa">
+                  {plano.economia >= 0 ? (
+                    <>
+                      <p>Economia no dia</p>
+                      <strong>{formatarMoeda(plano.economia)}</strong>
+                    </>
+                  ) : (
+                    // A linha de base da API resolve cada paciente com o estoque cheio; com estoque curto ela sai mais barata.
+                    <>
+                      <p>Custo a mais que a linha de base</p>
+                      <strong>{formatarMoeda(-plano.economia)}</strong>
+                    </>
+                  )}
+                  <p>
+                    {formatarMoeda(plano.custoOtimizado)} em vez de {formatarMoeda(plano.custoSemCompartilhamento)}, um frasco
+                    por paciente
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {plano && (foraDoPlano.length > 0 || soNoPlano.length > 0) && (
+            <p className="nota">
+              {foraDoPlano.length > 0 && `Fora do plano por não estarem aptos: ${foraDoPlano.join(', ')}. `}
+              {soNoPlano.length > 0 && `Saíram deste dia depois do plano: ${soNoPlano.join(', ')}; gere de novo.`}
+            </p>
+          )}
+
+          {ehAdmin ? (
+            <div className="acoes">
+              {(!plano || plano.status === 'RECUSADA') && aptas.length > 0 && (
+                <button type="button" className="botao-principal" onClick={gerar} disabled={!!ocupado}>
+                  {ocupado === 'gerar' ? 'Gerando…' : plano ? 'Gerar de novo' : 'Gerar plano'}
+                </button>
+              )}
+              {plano?.status === 'CONCLUIDA' && (
+                <>
+                  <button type="button" className="botao-principal" onClick={() => setDialogo('confirmar')} disabled={!!ocupado}>
+                    {ocupado === 'confirmar' ? 'Confirmando…' : 'Confirmar preparo'}
                   </button>
-                )}
-                {plano?.status === 'CONCLUIDA' && (
-                  <>
-                    <button type="button" className="botao-principal" onClick={() => setDialogo('confirmar')} disabled={!!ocupado}>
-                      {ocupado === 'confirmar' ? 'Confirmando…' : 'Confirmar preparo'}
-                    </button>
-                    <button type="button" className="botao-secundario" onClick={() => setDialogo('recusar')} disabled={!!ocupado}>
-                      {ocupado === 'recusar' ? 'Recusando…' : 'Recusar plano'}
-                    </button>
-                    <button type="button" className="botao-secundario" onClick={gerar} disabled={!!ocupado}>
+                  <button type="button" className="botao-secundario" onClick={() => setDialogo('recusar')} disabled={!!ocupado}>
+                    {ocupado === 'recusar' ? 'Recusando…' : 'Recusar'}
+                  </button>
+                  {aptas.length > 0 && (
+                    <button type="button" className="botao-link" onClick={gerar} disabled={!!ocupado}>
                       {ocupado === 'gerar' ? 'Gerando…' : 'Gerar de novo'}
                     </button>
-                  </>
-                )}
-              </div>
-            ) : (
-              <p className="nota">Só administradores geram, confirmam ou recusam planos. Seu perfil é de consulta.</p>
-            )}
-          </section>
-        </>
+                  )}
+                </>
+              )}
+            </div>
+          ) : (
+            <p className="nota">Só administradores geram, confirmam ou recusam planos.</p>
+          )}
+        </section>
       )}
 
       <Dialogo aberto={dialogo === 'confirmar'} titulo="Confirmar o preparo?" onFechar={() => setDialogo(null)}>
@@ -370,125 +398,12 @@ function SituacaoDoPlano({ plano }: { plano: Otimizacao }) {
   return <p className="situacao situacao-recusada">O solver não encontrou um plano ({plano.status})</p>
 }
 
-function Economia({ plano }: { plano: Otimizacao }) {
-  const maior = Math.max(plano.custoSemCompartilhamento, plano.custoOtimizado, 0.01)
-  const proporcao = plano.custoSemCompartilhamento > 0 ? plano.economia / plano.custoSemCompartilhamento : 0
-  return (
-    <div className="economia">
-      <dl className="economia-barras">
-        <div>
-          <dt>Cada paciente com os próprios frascos</dt>
-          <dd>
-            <span className="trilho">
-              <span className="barra barra-sem" style={{ width: `${(plano.custoSemCompartilhamento / maior) * 100}%` }} />
-            </span>
-            {formatarMoeda(plano.custoSemCompartilhamento)}
-          </dd>
-        </div>
-        <div>
-          <dt>Com os frascos divididos pelo plano</dt>
-          <dd>
-            <span className="trilho">
-              <span className="barra barra-com" style={{ width: `${(plano.custoOtimizado / maior) * 100}%` }} />
-            </span>
-            {formatarMoeda(plano.custoOtimizado)}
-          </dd>
-        </div>
-      </dl>
-      <p className="economia-resultado">
-        {plano.economia >= 0 ? (
-          <>
-            Economia de <strong>{formatarMoeda(plano.economia)}</strong> ({formatarPercentual(proporcao)}) no dia.
-          </>
-        ) : (
-          // A linha de base da API resolve cada paciente com o estoque cheio; com estoque curto ela pode sair mais barata.
-          <>
-            O plano custa <strong>{formatarMoeda(-plano.economia)}</strong> a mais que a linha de base, que não considera o
-            estoque dividido entre os pacientes.
-          </>
-        )}{' '}
-        A sobra descartada é de {formatarMg(plano.desperdicioMg)}.
-      </p>
-    </div>
+/** "2 frascos de 50 mg e 1 de 10 mg" (ordem da API: maior volume primeiro). */
+function resumoFrascos(plano: Otimizacao): string {
+  const porVolume = new Map<number, number>()
+  for (const f of plano.frascosAbertos) porVolume.set(f.volumeMg, (porVolume.get(f.volumeMg) ?? 0) + 1)
+  const partes = [...porVolume].map(([volume, n], i) =>
+    i === 0 ? `${n} ${n === 1 ? 'frasco' : 'frascos'} de ${formatarMg(volume)}` : `${n} de ${formatarMg(volume)}`,
   )
-}
-
-function TabelaPrescricoes({
-  prescricoes,
-  soNoPlano,
-  plano,
-  frascos,
-  cores,
-}: {
-  prescricoes: Prescricao[]
-  soNoPlano: string[]
-  plano: Otimizacao | null
-  frascos: Frasco[]
-  cores: Map<string, string>
-}) {
-  const volumeDe = (apresentacaoId: string) => frascos.find((f) => f.id === apresentacaoId)?.volumeMg
-  const origem = (partes: Otimizacao['alocacoes']) =>
-    partes
-      .map((a) => {
-        const volume = volumeDe(a.apresentacaoId)
-        return `${formatarMg(a.volumeMg)} do frasco ${a.numeroFrasco}${volume ? ` de ${formatarMg(volume)}` : ''} (${formatarPercentual(a.fracao)})`
-      })
-      .join('; ')
-
-  return (
-    <div className="tabela-rolagem">
-      <table className="tabela">
-        <thead>
-          <tr>
-            <th scope="col">Prescrição</th>
-            <th scope="col" className="numero">
-              Dose
-            </th>
-            <th scope="col">Situação</th>
-            <th scope="col">De onde sai a dose</th>
-          </tr>
-        </thead>
-        <tbody>
-          {prescricoes.map((p) => {
-            const partes = plano?.alocacoes.filter((a) => a.codigoPrescricao === p.codigoPrescricao) ?? []
-            return (
-              <tr key={p.id}>
-                <th scope="row">
-                  {p.status === 'APTO' && (
-                    <span className="amostra" style={{ background: cores.get(p.codigoPrescricao) }} aria-hidden="true" />
-                  )}
-                  {p.codigoPrescricao}
-                </th>
-                <td className="numero">{formatarMg(p.doseMg)}</td>
-                <td>{p.status === 'APTO' ? 'Apto' : <span className="nao-apto">Não apto</span>}</td>
-                <td>
-                  {p.status === 'NAO_APTO'
-                    ? 'Fica fora do plano'
-                    : !plano
-                      ? 'Sem plano ainda'
-                      : partes.length === 0
-                        ? 'Não está neste plano; gere de novo'
-                        : origem(partes)}
-                </td>
-              </tr>
-            )
-          })}
-          {soNoPlano.map((codigo) => {
-            const partes = plano?.alocacoes.filter((a) => a.codigoPrescricao === codigo) ?? []
-            return (
-              <tr key={codigo}>
-                <th scope="row">
-                  <span className="amostra" style={{ background: cores.get(codigo) }} aria-hidden="true" />
-                  {codigo}
-                </th>
-                <td className="numero">{formatarMg(partes.reduce((soma, a) => soma + a.volumeMg, 0))}</td>
-                <td>Saiu deste dia depois do plano; gere de novo</td>
-                <td>{origem(partes)}</td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
-    </div>
-  )
+  return partes.length <= 1 ? partes.join('') : `${partes.slice(0, -1).join(', ')} e ${partes[partes.length - 1]}`
 }

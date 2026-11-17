@@ -95,13 +95,29 @@ export async function requisitar<T>(caminho: string, opcoes: Opcoes = {}): Promi
     throw new ErroApi(
       resposta.status,
       problema.title ?? `Erro ${resposta.status}`,
-      problema.detail ?? 'A API recusou a operação sem explicar o motivo.',
+      // 400 de validação: o detail é genérico ("Um ou mais campos estão inválidos!"); a mensagem de cada campo diz o que corrigir.
+      problema.erros && Object.keys(problema.erros).length > 0
+        ? Object.values(problema.erros).map((m) => (/[.!?]$/.test(m) ? m : `${m}.`)).join(' ')
+        : problema.detail
+          ? motivoLegivel(problema.detail)
+          : 'A API recusou a operação sem explicar o motivo.',
       problema.erros,
     )
   }
 
   const texto = await resposta.text()
   return (texto ? JSON.parse(texto) : undefined) as T
+}
+
+/**
+ * Erros de negócio da API vêm como "Aplicação em estado inválido! id=<uuid> motivo=já está REALIZADA": para quem usa a
+ * tela, só o motivo interessa. Outros textos passam como estão.
+ */
+function motivoLegivel(detalhe: string): string {
+  const motivo = /motivo=(.+)$/s.exec(detalhe)?.[1]?.trim()
+  if (!motivo) return detalhe
+  const frase = motivo.charAt(0).toUpperCase() + motivo.slice(1)
+  return /[.!?]$/.test(frase) ? frase : `${frase}.`
 }
 
 async function lerProblema(resposta: Response): Promise<ProblemDetail> {

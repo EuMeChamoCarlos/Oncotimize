@@ -408,11 +408,6 @@ textarea {
   margin-bottom: 1rem;
 }
 
-.subtitulo {
-  font-size: 1rem;
-  margin: 1.75rem 0 0.75rem;
-}
-
 .plano-cabecalho {
   display: flex;
   flex-wrap: wrap;
@@ -504,63 +499,6 @@ textarea {
 
 .amostra-sobra {
   background: repeating-linear-gradient(45deg, var(--ambar) 0 2px, var(--ambar-fundo) 2px 5px);
-}
-
-.economia {
-  max-width: 44rem;
-}
-
-.economia-barras {
-  display: grid;
-  gap: 0.75rem;
-  margin: 0;
-}
-
-.economia-barras > div {
-  display: grid;
-  gap: 0.25rem;
-}
-
-.economia-barras dt {
-  font-size: var(--t-pequeno);
-  color: var(--tinta-suave);
-}
-
-.economia-barras dd {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin: 0;
-  font-weight: 700;
-}
-
-.trilho {
-  flex: 1;
-  max-width: 26rem;
-}
-
-.barra {
-  display: block;
-  height: 0.875rem;
-  min-width: 2px;
-  border-radius: 2px;
-}
-
-.barra-sem {
-  background: var(--aco-escuro);
-}
-
-.barra-com {
-  background: var(--petroleo);
-}
-
-.economia-resultado {
-  margin-top: 1rem;
-}
-
-.economia-resultado strong {
-  font-size: var(--t-m);
-  color: var(--petroleo);
 }
 
 .frascos {
@@ -658,6 +596,276 @@ textarea {
 
 .dialogo .acoes {
   margin-top: 0.5rem;
+}
+
+.acoes-linha {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.botao-pequeno {
+  padding: 0.4rem 0.75rem;
+  font-size: var(--t-pequeno);
+}
+
+.dialogo input[type='date'] {
+  width: 100%;
+}
+
+/* ---------- Agenda do dia e plano enxuto (refeitos em 2026-11-17) ---------- */
+
+.agenda-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.agenda-dia {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.agenda-dia-campo {
+  margin: 0;
+  padding: 0.4rem 0.6rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.agenda-dia-nome {
+  min-width: 6.5rem;
+  color: var(--tinta-suave);
+}
+
+.botao-icone {
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1.5px solid var(--aco-escuro);
+  border-radius: var(--raio);
+  background: var(--branco);
+  color: var(--tinta);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.botao-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--petroleo);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.botao-link:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.semana {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.375rem;
+  margin-bottom: 1.5rem;
+}
+
+.semana button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.5rem 0.25rem;
+  border: 1px solid var(--aco);
+  border-radius: var(--raio);
+  background: var(--branco);
+  color: var(--tinta-suave);
+  font-size: var(--t-pequeno);
+  cursor: pointer;
+}
+
+.semana button strong {
+  font-size: var(--t-m);
+  color: var(--tinta);
+}
+
+.semana button[aria-current='date'] {
+  border-color: var(--petroleo);
+  background: var(--petroleo);
+  color: var(--dose-1);
+}
+
+.semana button[aria-current='date'] strong {
+  color: var(--branco);
+}
+
+.sugestao {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+  padding: 0.875rem 1rem;
+  border-left: 4px solid var(--ambar);
+  background: var(--ambar-fundo);
+  color: var(--ambar-texto);
+}
+
+.sugestao p {
+  max-width: 60ch;
+}
+
+.pacientes {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--aco);
+}
+
+.pacientes li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  padding: 0.75rem 0.25rem;
+  border-bottom: 1px solid var(--aco);
+}
+
+.paciente-dados {
+  display: flex;
+  flex-direction: column;
+}
+
+.paciente-dados span {
+  font-size: var(--t-pequeno);
+  color: var(--tinta-suave);
+}
+
+.etiqueta {
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: var(--t-pequeno);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.paciente-nota {
+  color: var(--ambar-texto);
+}
+
+.etiqueta-neutra {
+  background: var(--aco);
+  color: var(--tinta);
+}
+
+.etiqueta-ok {
+  background: #dcefe4;
+  color: #1f5c3a;
+}
+
+.etiqueta-aviso {
+  background: var(--ambar-fundo);
+  color: var(--ambar-texto);
+}
+
+.etiqueta-nao-apto {
+  background: var(--erro-fundo);
+  color: var(--erro);
+}
+
+.agenda-procurar {
+  margin-top: 1.25rem;
+}
+
+.plano-destaque {
+  font-size: var(--t-g, 1.563rem);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.lista-simples {
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lista-simples li {
+  padding: 0.375rem 0;
+  border-bottom: 1px solid var(--aco);
+}
+
+.lista-simples span {
+  color: var(--tinta-suave);
+}
+
+.plano-resumo {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 1.5rem 2.5rem;
+  align-items: start;
+}
+
+.plano-numeros .nota {
+  margin: 0.25rem 0 1.25rem;
+}
+
+.economia-caixa {
+  padding: 1rem 1.25rem;
+  border-radius: var(--raio);
+  background: var(--branco);
+  border: 1px solid var(--aco);
+}
+
+.economia-caixa p {
+  font-size: var(--t-pequeno);
+  color: var(--tinta-suave);
+}
+
+.economia-caixa strong {
+  display: block;
+  margin: 0.125rem 0;
+  font-size: var(--t-gg);
+  line-height: 1.1;
+  color: var(--petroleo);
+}
+
+@media (max-width: 760px) {
+  .plano-resumo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .agenda-dia-nome {
+    min-width: 0;
+  }
+
+  .semana button {
+    padding: 0.375rem 0;
+  }
+
+  .semana-legenda {
+    display: none; /* o rótulo completo do dia está no aria-label do botão */
+  }
+
+  .pacientes li {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pacientes li .etiqueta {
+    justify-self: start;
+    white-space: normal;
+  }
+
+  .pacientes li .botao-pequeno {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
 }
 
 /* ---------- Telas estreitas ---------- */

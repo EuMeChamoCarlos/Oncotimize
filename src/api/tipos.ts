@@ -72,6 +72,39 @@ export interface Otimizacao {
   alocacoes: { codigoPrescricao: string; apresentacaoId: string; numeroFrasco: number; fracao: number; volumeMg: number }[]
 }
 
+/** AplicacaoController: GET /api/aplicacoes?data= (agenda do dia, pela data agendada). */
+export interface AplicacaoDoDia {
+  id: string
+  protocoloId: string
+  codigoProtocolo: string
+  numero: number
+  dataPrevista: string
+  dataAgendada: string
+  status: 'AGENDADA' | 'REALIZADA' | 'CANCELADA'
+  motivoAlteracao: string | null
+  medicamentos: { medicamentoId: string; doseMg: number; via: string }[]
+}
+
+export type StatusSugestao ='SUGERIDA' | 'ACEITA' | 'RECUSADA' | 'EXPIRADA'
+
+/** AgendaController / AplicacaoController: remarcação sugerida para uma aplicação (agenda ou paciente não apto). */
+export interface SugestaoRemarcacao {
+  id: string
+  aplicacaoId: string
+  codigoProtocolo: string
+  numero: number
+  tipo: 'AGENDA' | 'NAO_APTO'
+  origem: string
+  destino: string
+  economiaEstimada: number
+  motivoRemarcacao: string | null
+  status: StatusSugestao
+  geradaEm: string
+  decididaEm: string | null
+  decididaPor: string | null
+  motivoDecisao: string | null
+}
+
 /** RFC 9457, como devolvido pelo GlobalExceptionHandler. `erros` só nos 400 de validação. */
 export interface ProblemDetail {
   type?: string

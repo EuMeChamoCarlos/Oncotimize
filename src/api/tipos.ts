@@ -72,6 +72,16 @@ export interface Otimizacao {
   alocacoes: { codigoPrescricao: string; apresentacaoId: string; numeroFrasco: number; fracao: number; volumeMg: number }[]
 }
 
+/** Plano calculado sem gravar (prévia): mesmos campos, sem id. */
+export type PlanoCalculado = Omit<Otimizacao, 'id'> & { id: string | null }
+
+/** OtimizacaoController GET /api/otimizacoes/previa: sem plano, problema diz por quê (ex.: estoque insuficiente). */
+export interface PlanoPrevio {
+  medicamentoId: string
+  plano: PlanoCalculado | null
+  problema: string | null
+}
+
 /** ProtocoloController: protocolo do paciente com os quimioterápicos e todas as aplicações. */
 export interface Protocolo {
   id: string

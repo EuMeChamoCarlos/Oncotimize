@@ -1,63 +1,76 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { ErroApi } from '../api/cliente'
-import {
-  confirmarPlano,
-  gerarPlano,
-  listarFrascos,
-  listarMedicamentos,
-  listarPlanosDoDia,
-  listarPrescricoesDoDia,
-  recusarPlano,
-} from '../api/plano'
-import type { Frasco, Medicamento, Otimizacao, Prescricao } from '../api/tipos'
-import { useAuth } from '../auth/AuthContext'
-import CampoData from '../componentes/CampoData'
-import Dialogo from '../componentes/Dialogo'
-import FrascoDoPlano, { type ParteDoFrasco } from '../componentes/FrascoDoPlano'
-import {
-  formatarData,
-  formatarDataHora,
-  formatarMg,
-  formatarMoeda,
-  hojeIso,
-} from '../util/formatos'
+import { listarMedicamentos, listarPlanosDoDia, previaDoDia } from '../api/plano'
+import type { Medicamento, Otimizacao, PlanoCalculado, PlanoPrevio } from '../api/tipos'
+import CampoCalendario from '../componentes/CampoCalendario'
+import DetalheDoPlano, { CORES, resumoFrascos } from '../componentes/DetalheDoPlano'
+import FrascoDoPlano from '../componentes/FrascoDoPlano'
+import { formatarData, formatarMg, formatarMoeda, formatarPercentual, hojeIso } from '../util/formatos'
 
-interface DadosDoDia {
-  prescricoes: Prescricao[]
-  frascos: Frasco[]
-  planos: Otimizacao[]
+type Situacao = 'previa' | 'aguardando' | 'confirmado' | 'recusado'
+
+/** Um medicamento no dia: o plano gravado em vigor ou, sem ele (ou recusado), a prévia calculada agora. */
+interface Cartao {
+  medicamento: Medicamento
+  plano: PlanoCalculado | null
+  problema: string | null
+  situacao: Situacao
 }
 
-type Acao = 'gerar' | 'confirmar' | 'recusar'
-
-// Uma cor por prescrição, a mesma em todos os frascos; vizinhas alternam claro e escuro.
-const CORES = ['#2e6670', '#9cc3c9', '#3d5a80', '#a9bedb', '#5b4b8a', '#c3b8e0', '#2f6b4f', '#a6d1b8']
+const ROTULO: Record<Situacao, { texto: string; classe: string }> = {
+  previa: { texto: 'Prévia', classe: 'etiqueta' },
+  aguardando: { texto: 'Aguardando confirmação', classe: 'etiqueta etiqueta-aviso' },
+  confirmado: { texto: 'Confirmado', classe: 'etiqueta etiqueta-ok' },
+  recusado: { texto: 'Recusado · nova prévia', classe: 'etiqueta etiqueta-nao-apto' },
+}
 
 const mensagemDe = (erro: unknown) => (erro instanceof Error ? erro.message : 'Algo deu errado. Tente de novo.')
 
+// Datas ISO tratadas em UTC: o fuso não troca o dia.
+const somarDias = (iso: string, dias: number) => {
+  const [a, m, d] = iso.split('-').map(Number)
+  return new Date(Date.UTC(a, m - 1, d + dias)).toISOString().slice(0, 10)
+}
+const ehDataValida = (iso: string) => /^\d{4}-\d{2}-\d{2}$/.test(iso) && somarDias(iso, 0) === iso
+const DIA_SEMANA = new Intl.DateTimeFormat('pt-BR', { weekday: 'short', timeZone: 'UTC' })
+const diaComSemana = (iso: string) => `${DIA_SEMANA.format(new Date(`${iso}T00:00:00Z`)).replace('.', '')} ${formatarData(iso)}`
+
+/** Junta a prévia com os planos gravados: o gravado vale, a menos que tenha sido recusado. */
+function montarCartoes(medicamentos: Medicamento[], previa: PlanoPrevio[], planos: Otimizacao[]): Cartao[] {
+  const ids = [...new Set([...previa.map((p) => p.medicamentoId), ...planos.map((p) => p.medicamentoId)])]
+  return ids.flatMap((id): Cartao[] => {
+    const medicamento = medicamentos.find((m) => m.id === id)
+    if (!medicamento) return []
+    const gravados = planos.filter((p) => p.medicamentoId === id) // a API manda o mais recente primeiro
+    const vigente = gravados.find((p) => p.status === 'CONFIRMADA') ?? gravados[0]
+    const daPrevia = previa.find((p) => p.medicamentoId === id)
+    if (vigente && vigente.status !== 'RECUSADA') {
+      return [{ medicamento, plano: vigente, problema: null, situacao: vigente.status === 'CONFIRMADA' ? 'confirmado' : 'aguardando' }]
+    }
+    return [{
+      medicamento,
+      plano: daPrevia?.plano ?? null,
+      problema: daPrevia?.problema ?? null,
+      situacao: vigente ? 'recusado' : 'previa',
+    }]
+  })
+}
+
 export default function PlanoDoDia() {
-  const { ehAdmin } = useAuth()
   const [busca, setBusca] = useSearchParams()
   // Data padrão fixada na montagem: um render depois da meia-noite não troca o dia sozinho.
   const [hoje] = useState(hojeIso)
-  const medicamentoId = busca.get('medicamento') ?? ''
-  const data = busca.get('data') || hoje
-  // Resposta de uma ação só vale se o usuário ainda está no mesmo medicamento e dia.
-  const filtroAtual = useRef('')
-  useEffect(() => {
-    filtroAtual.current = `${medicamentoId}|${data}`
-  }, [medicamentoId, data])
+  const pedido = busca.get('data') ?? ''
+  const data = ehDataValida(pedido) ? pedido : hoje
+  // ?medicamento= (links antigos) vira filtro e abre o cartão.
+  const antigo = busca.get('medicamento')
+  const filtro = (busca.get('medicamentos') ?? antigo ?? '').split(',').filter(Boolean)
+  const aberto = busca.get('aberto') ?? antigo ?? ''
 
   const [medicamentos, setMedicamentos] = useState<Medicamento[] | null>(null)
-  const [dia, setDia] = useState<DadosDoDia | null>(null)
-  const [carregando, setCarregando] = useState(false)
+  const [cartoes, setCartoes] = useState<Cartao[] | null>(null)
   const [versao, setVersao] = useState(0)
   const [erro, setErro] = useState<string | null>(null)
-  const [sucesso, setSucesso] = useState<string | null>(null)
-  const [ocupado, setOcupado] = useState<Acao | null>(null)
-  const [dialogo, setDialogo] = useState<'confirmar' | 'recusar' | null>(null)
-  const [motivo, setMotivo] = useState('')
 
   useEffect(() => {
     listarMedicamentos()
@@ -66,345 +79,215 @@ export default function PlanoDoDia() {
   }, [])
 
   useEffect(() => {
-    setDia(null)
-    if (!medicamentoId) {
-      setCarregando(false)
-      return
-    }
+    if (!medicamentos) return
     let ativo = true
-    setCarregando(true)
-    // O erro não é limpo aqui: uma recarga depois de 409/422 precisa manter o detail da API na tela.
-    Promise.all([
-      listarPrescricoesDoDia(medicamentoId, data),
-      listarFrascos(medicamentoId),
-      listarPlanosDoDia(medicamentoId, data),
-    ])
-      .then(([prescricoes, frascos, planos]) => ativo && setDia({ prescricoes, frascos, planos }))
+    Promise.all([previaDoDia(data), listarPlanosDoDia(null, data)])
+      .then(([previa, planos]) => {
+        if (!ativo) return
+        setCartoes(montarCartoes(medicamentos, previa, planos))
+        setErro(null)
+      })
       .catch((e) => ativo && setErro(mensagemDe(e)))
-      .finally(() => ativo && setCarregando(false))
     return () => {
       ativo = false
     }
-  }, [medicamentoId, data, versao])
+  }, [medicamentos, data, versao])
 
-  function mudarFiltro(chave: 'medicamento' | 'data', valor: string) {
-    if (chave === 'data' && !valor) return // apagar um pedaço da data no campo não volta para hoje
-    setSucesso(null)
-    setErro(null)
+  function mudar(valores: Record<string, string>) {
     setBusca(
       (anterior) => {
         const nova = new URLSearchParams(anterior)
-        if (valor) nova.set(chave, valor)
-        else nova.delete(chave)
+        nova.delete('medicamento')
+        for (const [chave, valor] of Object.entries(valores)) {
+          if (valor) nova.set(chave, valor)
+          else nova.delete(chave)
+        }
         return nova
       },
       { replace: true },
     )
   }
 
-  /** Devolve true se a ação deu certo. */
-  async function executar(acao: Acao, chamada: () => Promise<Otimizacao>, mensagem: string): Promise<boolean> {
-    const alvo = `${medicamentoId}|${data}`
-    setOcupado(acao)
-    setErro(null)
-    setSucesso(null)
-    try {
-      const atualizado = await chamada()
-      if (filtroAtual.current === alvo) {
-        setDia((atual) => atual && { ...atual, planos: [atualizado, ...atual.planos.filter((p) => p.id !== atualizado.id)] })
-        setSucesso(mensagem)
-      }
-      return true
-    } catch (e) {
-      if (filtroAtual.current === alvo) {
-        setErro(mensagemDe(e))
-        // 409/422: o plano do dia mudou (outro usuário, estoque); recarrega para mostrar o estado real.
-        if (e instanceof ErroApi && (e.status === 409 || e.status === 422)) setVersao((v) => v + 1)
-      }
-      return false
-    } finally {
-      setOcupado(null)
-    }
+  function irPara(novoDia: string) {
+    setCartoes(null)
+    mudar({ data: novoDia, aberto: '' })
   }
 
-  const medicamento = medicamentos?.find((m) => m.id === medicamentoId) ?? null
-  const plano = dia ? (dia.planos.find((p) => p.status === 'CONFIRMADA') ?? dia.planos[0] ?? null) : null
-  const aptas = dia?.prescricoes.filter((p) => p.status === 'APTO') ?? []
-  // A lista e o solver usam o mesmo dia de preparo (API, lacuna (c) resolvida). Um código só no plano é de um plano
-  // gerado antes de a aplicação sair deste dia (remarcação): entra na tabela como linha extra, com aviso.
-  const codigosNaTabela = new Set(dia?.prescricoes.map((p) => p.codigoPrescricao) ?? [])
-  const soNoPlano = [...new Set(plano?.alocacoes.map((a) => a.codigoPrescricao) ?? [])].filter(
-    (codigo) => !codigosNaTabela.has(codigo),
-  )
-  const codigosNoPlano = new Set(plano?.alocacoes.map((a) => a.codigoPrescricao) ?? [])
-  const naoAptosNoPlano = (dia?.prescricoes ?? [])
-    .filter((p) => p.status === 'NAO_APTO' && codigosNoPlano.has(p.codigoPrescricao))
-    .map((p) => p.codigoPrescricao)
-  const foraDoPlano = (dia?.prescricoes ?? [])
-    .filter((p) => p.status === 'NAO_APTO' && !codigosNoPlano.has(p.codigoPrescricao))
-    .map((p) => p.codigoPrescricao)
-  const codigosComCor = [
-    ...aptas.map((p) => p.codigoPrescricao),
-    ...naoAptosNoPlano,
-    ...soNoPlano,
-  ]
-  const cores = new Map(codigosComCor.map((codigo, i) => [codigo, CORES[i % CORES.length]]))
-
-  function confirmar(evento: FormEvent) {
-    evento.preventDefault()
-    if (!plano) return
-    setDialogo(null)
-    void executar('confirmar', () => confirmarPlano(plano.id), 'Preparo confirmado. O estoque dos frascos abertos foi baixado.')
+  function alternarFiltro(id: string | null) {
+    const novo = id === null ? [] : filtro.includes(id) ? filtro.filter((f) => f !== id) : [...filtro, id]
+    mudar({ medicamentos: novo.join(','), aberto: novo.length === 0 || novo.includes(aberto) ? aberto : '' })
   }
 
-  function recusar(evento: FormEvent) {
-    evento.preventDefault()
-    if (!plano) return
-    setDialogo(null)
-    void executar('recusar', () => recusarPlano(plano.id, motivo.trim()), 'Plano recusado. Nenhum frasco foi baixado.').then(
-      (deuCerto) => deuCerto && setMotivo(''),
-    )
-  }
-
-  function gerar() {
-    void executar('gerar', () => gerarPlano(medicamentoId, data), 'Plano gerado. Confira os frascos antes de confirmar o preparo.')
-  }
+  const visiveis = (cartoes ?? []).filter((c) => filtro.length === 0 || filtro.includes(c.medicamento.id))
+  const comPlano = visiveis.flatMap((c) => (c.plano ? [c.plano] : []))
+  const soma = (campo: (p: PlanoCalculado) => number) => comPlano.reduce((total, p) => total + campo(p), 0)
+  const custo = soma((p) => p.custoOtimizado)
+  const semCompartilhar = soma((p) => p.custoSemCompartilhamento)
+  const economia = soma((p) => p.economia)
+  const frascos = soma((p) => p.frascosAbertos.length)
+  const sobra = soma((p) => p.desperdicioMg)
+  const pacientes = soma((p) => new Set(p.alocacoes.map((a) => a.codigoPrescricao)).size)
 
   return (
     <section className="pagina plano">
       <title>Plano do dia – Oncotimize</title>
-      <h1>Plano do dia</h1>
-
-      <form className="filtros" onSubmit={(e) => e.preventDefault()}>
-        <div className="campo">
-          <label htmlFor="filtro-medicamento">Medicamento</label>
-          <select
-            id="filtro-medicamento"
-            value={medicamentoId}
-            onChange={(e) => mudarFiltro('medicamento', e.target.value)}
-            disabled={!medicamentos}
-          >
-            <option value="">{medicamentos ? 'Escolha um medicamento' : 'Carregando…'}</option>
-            {medicamentos?.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.nome}
-              </option>
-            ))}
-          </select>
+      <div className="agenda-topo">
+        <h1>Plano do dia</h1>
+        <div className="agenda-dia">
+          <button type="button" className="botao-icone" aria-label="Dia anterior" onClick={() => irPara(somarDias(data, -1))}>
+            ‹
+          </button>
+          <CampoCalendario texto={diaComSemana(data)} valor={data} onMudar={irPara} />
+          <button type="button" className="botao-icone" aria-label="Próximo dia" onClick={() => irPara(somarDias(data, 1))}>
+            ›
+          </button>
+          <span className="so-leitor" aria-live="polite">
+            Plano de {diaComSemana(data)}
+          </span>
         </div>
-        <div className="campo">
-          <label htmlFor="filtro-data">Data</label>
-          <CampoData id="filtro-data" valor={data} onMudar={(v) => mudarFiltro('data', v)} />
-        </div>
-      </form>
+      </div>
 
       {erro && (
         <p className="mensagem mensagem-erro" role="alert">
           {erro}
         </p>
       )}
-      {/* Região viva sempre montada: o leitor de tela anuncia o sucesso quando ele aparece. */}
-      <div aria-live="polite">{sucesso && <p className="mensagem mensagem-sucesso">{sucesso}</p>}</div>
 
-      {!medicamentoId && <p className="vazio">Escolha um medicamento para ver quais frascos abrir no dia.</p>}
-      {carregando && (
+      {!cartoes && !erro && (
         <p className="vazio" role="status">
           Carregando o dia…
         </p>
       )}
 
-      {dia && medicamento && (
-        <section className="bloco plano-dia" aria-labelledby="titulo-plano">
-          <div className="plano-cabecalho">
-            <h2 id="titulo-plano">
-              {medicamento.nome}, {formatarData(data)}
-            </h2>
-            {plano && <SituacaoDoPlano plano={plano} />}
-          </div>
+      {cartoes && cartoes.length === 0 && <p className="vazio">Nenhum paciente apto neste dia.</p>}
 
-          {plano?.status === 'CONCLUIDA' && naoAptosNoPlano.length > 0 && (
-            <p className="mensagem mensagem-aviso" role="status">
-              Este plano inclui {naoAptosNoPlano.join(', ')}, que não {naoAptosNoPlano.length === 1 ? 'está' : 'estão'} mais
-              apto{naoAptosNoPlano.length === 1 ? '' : 's'}.{' '}
-              {aptas.length > 0 ? 'Gere de novo antes de confirmar o preparo.' : 'Não há outro paciente apto no dia: recuse o plano.'}
-            </p>
-          )}
+      {cartoes && cartoes.length > 0 && (
+        <>
+          <dl className="painel-resumo" aria-label="Resumo do dia">
+            <div>
+              <dt>Custo do dia</dt>
+              <dd>{formatarMoeda(custo)}</dd>
+            </div>
+            <div>
+              <dt>Sem compartilhar</dt>
+              <dd>{formatarMoeda(semCompartilhar)}</dd>
+            </div>
+            <div className="painel-resumo-destaque">
+              <dt>Economia</dt>
+              <dd>
+                {formatarMoeda(economia)}
+                {semCompartilhar > 0 && <span> ({formatarPercentual(economia / semCompartilhar)})</span>}
+              </dd>
+            </div>
+            <div>
+              <dt>Frascos abertos</dt>
+              <dd>
+                {frascos} <span>para {pacientes} {pacientes === 1 ? 'paciente' : 'pacientes'}</span>
+              </dd>
+            </div>
+            <div>
+              <dt>Sobra</dt>
+              <dd>{formatarMg(sobra)}</dd>
+            </div>
+          </dl>
 
-          {!plano &&
-            (aptas.length === 0 ? (
-              <p className="vazio">Nenhum paciente apto para {medicamento.nome} neste dia.</p>
-            ) : (
-              <>
-                <p className="plano-destaque">
-                  {aptas.length} {aptas.length === 1 ? 'paciente apto' : 'pacientes aptos'}
-                </p>
-                <ul className="lista-simples">
-                  {aptas.map((p) => (
-                    <li key={p.id}>
-                      {p.codigoPrescricao} <span>{formatarMg(p.doseMg)}</span>
-                    </li>
-                  ))}
-                </ul>
-              </>
+          <div className="filtro-chips" role="group" aria-label="Filtrar por medicamento">
+            <button type="button" className="chip" aria-pressed={filtro.length === 0} onClick={() => alternarFiltro(null)}>
+              Todos
+            </button>
+            {cartoes.map((c) => (
+              <button
+                key={c.medicamento.id}
+                type="button"
+                className="chip"
+                aria-pressed={filtro.includes(c.medicamento.id)}
+                onClick={() => alternarFiltro(c.medicamento.id)}
+              >
+                {c.medicamento.nome}
+              </button>
             ))}
+          </div>
 
-          {plano && (
-            <div className="plano-resumo">
-              <div className="frascos">
-                {plano.frascosAbertos.map((aberto) => {
-                  const apresentacao = dia.frascos.find((f) => f.id === aberto.apresentacaoId)
-                  const partes: ParteDoFrasco[] = plano.alocacoes
-                    .filter((a) => a.apresentacaoId === aberto.apresentacaoId && a.numeroFrasco === aberto.numeroFrasco)
-                    .map((a) => ({
-                      codigo: a.codigoPrescricao,
-                      volumeMg: a.volumeMg,
-                      cor: cores.get(a.codigoPrescricao) ?? 'var(--aco-escuro)',
-                    }))
-                  return (
-                    <FrascoDoPlano
-                      key={`${aberto.apresentacaoId}-${aberto.numeroFrasco}`}
-                      rotulo={`Frasco ${aberto.numeroFrasco} de ${formatarMg(aberto.volumeMg)}`}
-                      descricao={apresentacao?.descricaoTasy ?? null}
-                      volumeMg={aberto.volumeMg}
-                      partes={partes}
-                    />
-                  )
-                })}
-              </div>
-              <div className="plano-numeros">
-                <p className="plano-destaque">Abrir {resumoFrascos(plano)}</p>
-                <p className="nota">
-                  para {codigosNoPlano.size} {codigosNoPlano.size === 1 ? 'paciente' : 'pacientes'}, com{' '}
-                  {formatarMg(plano.desperdicioMg)} de sobra
-                </p>
-                <div className="economia-caixa">
-                  {plano.economia >= 0 ? (
-                    <>
-                      <p>Economia no dia</p>
-                      <strong>{formatarMoeda(plano.economia)}</strong>
-                    </>
-                  ) : (
-                    // A linha de base da API resolve cada paciente com o estoque cheio; com estoque curto ela sai mais barata.
-                    <>
-                      <p>Custo a mais que a linha de base</p>
-                      <strong>{formatarMoeda(-plano.economia)}</strong>
-                    </>
-                  )}
-                  <p>
-                    {formatarMoeda(plano.custoOtimizado)} em vez de {formatarMoeda(plano.custoSemCompartilhamento)}, um frasco
-                    por paciente
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {plano && (foraDoPlano.length > 0 || soNoPlano.length > 0) && (
-            <p className="nota">
-              {foraDoPlano.length > 0 && `Fora do plano por não estarem aptos: ${foraDoPlano.join(', ')}. `}
-              {soNoPlano.length > 0 && `Saíram deste dia depois do plano: ${soNoPlano.join(', ')}; gere de novo.`}
-            </p>
-          )}
-
-          {ehAdmin ? (
-            <div className="acoes">
-              {(!plano || plano.status === 'RECUSADA') && aptas.length > 0 && (
-                <button type="button" className="botao-principal" onClick={gerar} disabled={!!ocupado}>
-                  {ocupado === 'gerar' ? 'Gerando…' : plano ? 'Gerar de novo' : 'Gerar plano'}
-                </button>
-              )}
-              {plano?.status === 'CONCLUIDA' && (
-                <>
-                  <button type="button" className="botao-principal" onClick={() => setDialogo('confirmar')} disabled={!!ocupado}>
-                    {ocupado === 'confirmar' ? 'Confirmando…' : 'Confirmar preparo'}
-                  </button>
-                  <button type="button" className="botao-secundario" onClick={() => setDialogo('recusar')} disabled={!!ocupado}>
-                    {ocupado === 'recusar' ? 'Recusando…' : 'Recusar'}
-                  </button>
-                  {aptas.length > 0 && (
-                    <button type="button" className="botao-link" onClick={gerar} disabled={!!ocupado}>
-                      {ocupado === 'gerar' ? 'Gerando…' : 'Gerar de novo'}
-                    </button>
-                  )}
-                </>
-              )}
-            </div>
-          ) : (
-            <p className="nota">Só administradores geram, confirmam ou recusam planos.</p>
-          )}
-        </section>
+          <div className="cartoes">
+            {visiveis.map((c) => (
+              <CartaoDoPlano
+                key={c.medicamento.id}
+                cartao={c}
+                data={data}
+                aberto={aberto === c.medicamento.id}
+                onAlternar={() => mudar({ aberto: aberto === c.medicamento.id ? '' : c.medicamento.id })}
+                onMudou={() => setVersao((v) => v + 1)}
+              />
+            ))}
+          </div>
+        </>
       )}
-
-      <Dialogo aberto={dialogo === 'confirmar'} titulo="Confirmar o preparo?" onFechar={() => setDialogo(null)}>
-        <form onSubmit={confirmar}>
-          <p>
-            O estoque de {plano?.frascosAbertos.length ?? 0}{' '}
-            {plano?.frascosAbertos.length === 1 ? 'frasco' : 'frascos'} de {medicamento?.nome} será baixado e o plano de{' '}
-            {formatarData(data)} ficará fechado. Confirme só depois de preparar as doses.
-          </p>
-          <div className="acoes">
-            <button type="submit" className="botao-principal">
-              Confirmar preparo
-            </button>
-            <button type="button" className="botao-secundario" onClick={() => setDialogo(null)}>
-              Voltar
-            </button>
-          </div>
-        </form>
-      </Dialogo>
-
-      <Dialogo aberto={dialogo === 'recusar'} titulo="Recusar o plano?" onFechar={() => setDialogo(null)}>
-        <form onSubmit={recusar}>
-          <p>Nenhum frasco será baixado. Depois é possível gerar um plano novo.</p>
-          <label htmlFor="motivo-recusa">Motivo (opcional)</label>
-          <textarea
-            id="motivo-recusa"
-            maxLength={500}
-            rows={3}
-            value={motivo}
-            onChange={(e) => setMotivo(e.target.value)}
-          />
-          <div className="acoes">
-            <button type="submit" className="botao-principal">
-              Recusar plano
-            </button>
-            <button type="button" className="botao-secundario" onClick={() => setDialogo(null)}>
-              Voltar
-            </button>
-          </div>
-        </form>
-      </Dialogo>
     </section>
   )
 }
 
-function SituacaoDoPlano({ plano }: { plano: Otimizacao }) {
-  if (plano.status === 'CONFIRMADA') {
-    return (
-      <p className="situacao situacao-confirmada">
-        Preparo confirmado{plano.confirmadaEm ? ` em ${formatarDataHora(plano.confirmadaEm)}` : ''}
-      </p>
-    )
-  }
-  if (plano.status === 'RECUSADA') {
-    return (
-      <p className="situacao situacao-recusada">
-        Recusado{plano.recusadaPor ? ` por ${plano.recusadaPor}` : ''}
-        {plano.recusadaEm ? ` em ${formatarDataHora(plano.recusadaEm)}` : ''}
-        {plano.motivoRecusa ? `: ${plano.motivoRecusa}` : ''}
-      </p>
-    )
-  }
-  if (plano.status === 'CONCLUIDA') return <p className="situacao">Aguardando confirmação do preparo</p>
-  return <p className="situacao situacao-recusada">O solver não encontrou um plano ({plano.status})</p>
+interface PropsCartao {
+  cartao: Cartao
+  data: string
+  aberto: boolean
+  onAlternar(): void
+  onMudou(): void
 }
 
-/** "2 frascos de 50 mg e 1 de 10 mg" (ordem da API: maior volume primeiro). */
-function resumoFrascos(plano: Otimizacao): string {
-  const porVolume = new Map<number, number>()
-  for (const f of plano.frascosAbertos) porVolume.set(f.volumeMg, (porVolume.get(f.volumeMg) ?? 0) + 1)
-  const partes = [...porVolume].map(([volume, n], i) =>
-    i === 0 ? `${n} ${n === 1 ? 'frasco' : 'frascos'} de ${formatarMg(volume)}` : `${n} de ${formatarMg(volume)}`,
+function CartaoDoPlano({ cartao, data, aberto, onAlternar, onMudou }: PropsCartao) {
+  const { medicamento, plano, problema, situacao } = cartao
+  const rotulo = ROTULO[situacao]
+  const codigos = [...new Set(plano?.alocacoes.map((a) => a.codigoPrescricao) ?? [])]
+  const cores = new Map(codigos.map((codigo, i) => [codigo, CORES[i % CORES.length]]))
+  const idDetalhe = `detalhe-${medicamento.id}`
+
+  return (
+    <article className={aberto ? 'cartao-plano cartao-plano-aberto' : 'cartao-plano'} aria-labelledby={`nome-${medicamento.id}`}>
+      <header className="cartao-plano-topo">
+        <h2 id={`nome-${medicamento.id}`}>{medicamento.nome}</h2>
+        <span className={rotulo.classe}>{rotulo.texto}</span>
+      </header>
+
+      {problema && <p className="mensagem mensagem-aviso">{problema}</p>}
+      {!problema && !plano && <p className="vazio">Nenhum paciente apto agora.</p>}
+      {plano && (
+        <>
+          <p className="nota">
+            {codigos.length} {codigos.length === 1 ? 'paciente' : 'pacientes'} · {resumoFrascos(plano)}
+          </p>
+          <div className="frascos-mini">
+            {plano.frascosAbertos.map((f) => (
+              <FrascoDoPlano
+                key={`${f.apresentacaoId}-${f.numeroFrasco}`}
+                compacto
+                rotulo={`Frasco ${f.numeroFrasco} de ${formatarMg(f.volumeMg)}`}
+                descricao={null}
+                volumeMg={f.volumeMg}
+                partes={plano.alocacoes
+                  .filter((a) => a.apresentacaoId === f.apresentacaoId && a.numeroFrasco === f.numeroFrasco)
+                  .map((a) => ({ codigo: a.codigoPrescricao, volumeMg: a.volumeMg, cor: cores.get(a.codigoPrescricao) ?? 'var(--aco-escuro)' }))}
+              />
+            ))}
+          </div>
+          <p className="cartao-plano-numeros">
+            <strong>{formatarMoeda(plano.custoOtimizado)}</strong>
+            <span>
+              {plano.economia >= 0
+                ? `economia de ${formatarMoeda(plano.economia)}`
+                : `${formatarMoeda(-plano.economia)} a mais que sem compartilhar`}
+            </span>
+          </p>
+        </>
+      )}
+
+      <button type="button" className="botao-link" aria-expanded={aberto} aria-controls={idDetalhe} onClick={onAlternar}>
+        {aberto ? 'Fechar detalhes' : 'Ver detalhes'}
+      </button>
+      {aberto && (
+        <div id={idDetalhe}>
+          <DetalheDoPlano medicamento={medicamento} data={data} onMudou={onMudou} />
+        </div>
+      )}
+    </article>
   )
-  return partes.length <= 1 ? partes.join('') : `${partes.slice(0, -1).join(', ')} e ${partes[partes.length - 1]}`
 }

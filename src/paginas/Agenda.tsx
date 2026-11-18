@@ -13,6 +13,7 @@ import { ErroApi } from '../api/cliente'
 import { listarMedicamentos } from '../api/plano'
 import type { AplicacaoDoDia, Medicamento, Prescricao, SugestaoRemarcacao } from '../api/tipos'
 import { useAuth } from '../auth/AuthContext'
+import CampoCalendario from '../componentes/CampoCalendario'
 import Dialogo from '../componentes/Dialogo'
 import { formatarData, formatarMg, formatarMoeda, hojeIso } from '../util/formatos'
 
@@ -211,17 +212,6 @@ export default function Agenda() {
   }
 
   const intervalo = `${formatarData(semana[0]).slice(0, 5)} a ${formatarData(semana[6])}`
-  const calendario = useRef<HTMLInputElement>(null)
-  // showPicker abre o calendário nativo; navegador sem ele recebe o foco no campo.
-  function abrirCalendario() {
-    const campo = calendario.current
-    if (!campo) return
-    try {
-      campo.showPicker()
-    } catch {
-      campo.focus()
-    }
-  }
 
   const nomeDe = (id: string) => medicamentos.find((m) => m.id === id)?.nome ?? 'Medicamento'
   const sugestoesDoDia = pendentes.filter((s) => s.origem === dia)
@@ -336,25 +326,8 @@ export default function Agenda() {
           <button type="button" className="botao-icone" aria-label="Semana anterior" onClick={() => irPara(somarDias(dia, -7))}>
             ‹
           </button>
-          {/* O intervalo abre o calendário do navegador (input escondido) para pular para qualquer dia. */}
-          <button type="button" className="agenda-semana-campo" onClick={abrirCalendario}>
-            <span>{intervalo}</span>
-            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="5" width="18" height="16" rx="2" />
-              <path d="M3 10h18M8 3v4M16 3v4" />
-            </svg>
-          </button>
-          <input
-            ref={calendario}
-            type="date"
-            className="agenda-calendario"
-            tabIndex={-1}
-            aria-hidden="true"
-            min="2000-01-01"
-            max="2100-12-31"
-            value={dia}
-            onChange={(e) => e.target.value && irPara(e.target.value)}
-          />
+          {/* O intervalo abre o calendário do navegador para pular para qualquer dia. */}
+          <CampoCalendario texto={intervalo} valor={dia} onMudar={irPara} />
           <button type="button" className="botao-icone" aria-label="Próxima semana" onClick={() => irPara(somarDias(dia, 7))}>
             ›
           </button>

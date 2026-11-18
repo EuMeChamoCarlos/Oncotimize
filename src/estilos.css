@@ -690,14 +690,19 @@ textarea {
 }
 
 .agenda-dia {
-  position: relative;
   display: flex;
   align-items: center;
   gap: var(--e-2);
 }
 
-/* Intervalo da semana: parece um campo, abre o calendário nativo. */
-.agenda-semana-campo {
+/* CampoCalendario (agenda e plano do dia): parece um campo e abre o calendário nativo. */
+.calendario {
+  position: relative;
+  display: inline-flex;
+}
+
+.calendario-botao {
+  flex: 1 1 auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -714,13 +719,13 @@ textarea {
   cursor: pointer;
 }
 
-.agenda-semana-campo:hover {
+.calendario-botao:hover {
   border-color: var(--petroleo);
   background: var(--vidro);
 }
 
-/* Fica sob o intervalo, invisível: o showPicker abre o calendário ancorado aqui. */
-.agenda-calendario {
+/* Fica sob o botão, invisível: o showPicker abre o calendário ancorado aqui. */
+.calendario-input {
   position: absolute;
   left: 50%;
   bottom: 0;
@@ -840,6 +845,151 @@ textarea {
 
 
 /* ---------- Plano do dia ---------- */
+
+/* Painel: resumo do dia, filtro por medicamento e um cartão por medicamento. */
+.painel-resumo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+  gap: var(--e-3);
+  margin: 0 0 var(--e-5);
+}
+
+.painel-resumo > div {
+  padding: var(--e-3) var(--e-4);
+  border: 1px solid var(--aco);
+  border-radius: var(--raio);
+  background: var(--branco);
+}
+
+.painel-resumo dt {
+  font-size: var(--t-pequeno);
+  color: var(--tinta-suave);
+}
+
+.painel-resumo dd {
+  margin: var(--e-1) 0 0;
+  font-size: var(--t-m);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.painel-resumo dd span {
+  font-size: var(--t-pequeno);
+  font-weight: 400;
+  color: var(--tinta-suave);
+}
+
+.painel-resumo-destaque dd {
+  color: var(--petroleo);
+}
+
+.filtro-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e-2);
+  margin-bottom: var(--e-5);
+}
+
+.chip {
+  min-height: 2.25rem;
+  padding: var(--e-1) var(--e-4);
+  border: 1.5px solid var(--aco-escuro);
+  border-radius: var(--raio-pilula);
+  background: var(--branco);
+  color: var(--tinta);
+  font: inherit;
+  font-size: var(--t-pequeno);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.chip:hover {
+  border-color: var(--petroleo);
+}
+
+.chip[aria-pressed='true'] {
+  border-color: var(--petroleo);
+  background: var(--petroleo);
+  color: var(--vidro);
+}
+
+.cartoes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+  gap: var(--e-4);
+  align-items: start;
+}
+
+.cartao-plano {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-3);
+  padding: var(--e-4) var(--e-5);
+  border: 1px solid var(--aco);
+  border-radius: var(--raio);
+  background: var(--branco);
+}
+
+/* Aberto, o cartão ocupa a linha inteira para caber o detalhe. */
+.cartao-plano-aberto {
+  grid-column: 1 / -1;
+}
+
+.cartao-plano-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e-2);
+}
+
+.cartao-plano-topo h2 {
+  margin: 0;
+  font-size: var(--t-m);
+}
+
+.cartao-plano .nota,
+.cartao-plano .vazio,
+.cartao-plano .mensagem {
+  margin: 0;
+}
+
+.cartao-plano > .botao-link {
+  align-self: flex-start;
+}
+
+.cartao-plano-numeros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--e-1) var(--e-3);
+}
+
+.cartao-plano-numeros strong {
+  font-size: var(--t-m);
+  font-variant-numeric: tabular-nums;
+}
+
+.cartao-plano-numeros span {
+  color: var(--petroleo);
+  font-weight: 600;
+}
+
+.frascos-mini {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e-2);
+}
+
+.frasco-plano-compacto {
+  display: block;
+  width: 2.75rem;
+}
+
+.plano-detalhe {
+  padding-top: var(--e-4);
+  border-top: 1px solid var(--aco);
+}
 
 .plano-destaque {
   font-size: var(--t-m);
@@ -1088,14 +1238,17 @@ textarea {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  /* agenda: setas e intervalo da semana numa linha; o botão de busca ocupa a largura */
+  /* agenda e plano: setas e data numa linha; o botão de busca ocupa a largura */
   .agenda-dia {
     flex: 1 1 100%;
   }
 
-  .agenda-semana-campo {
+  .agenda-dia .calendario {
     flex: 1 1 auto;
     min-width: 0;
+  }
+
+  .calendario-botao {
     min-height: var(--alvo);
   }
 

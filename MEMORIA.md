@@ -8,7 +8,7 @@
 > Nome trocado (componente, rota, tela, campo) → trocar aqui. Decisão revista → substituir. Item descartado →
 > remover ou marcar. O que for do TCC ou da API vai também para a memória da API.
 >
-> Última atualização: 2026-11-17.
+> Última atualização: 2026-11-18.
 >
 > **Sem dados de pacientes aqui nem na interface.** Só códigos de protocolo e prescrição.
 
@@ -74,6 +74,7 @@ Oncotimize/
 | 3 | `feature/agenda` | Agenda do dia (redesenhada em 2026-11-17, ver Decisões): faixa da semana (aplicações por dia), linhas = aplicações agendadas no dia (`GET /api/aplicacoes?data=`, rota nova da API) com o status da prescrição de cada uma (`GET /api/prescricoes?data=`); aplicação sem prescrição ("Aguardando prescrição", ex.: chegou por remarcação) e não apto remarcado ("Remarcada para dd/mm", no dia da avaliação, sem ação) aparecem com nota — o autor não achava a remarcação aceita quando a agenda era montada pelas prescrições; "Não apto" → data mínima + motivo → `POST /api/aplicacoes/{id}/remarcacao` (o 422 "sem dia de retorno" vira aviso com "Tentar outra data mínima"), sugestões pendentes do dia com aceitar/recusar, "Procurar remarcações nesta semana". Junto: erros mostram só o `motivo=` do detail e, nos 400, a mensagem do campo (`cliente.ts`); o plano do dia foi enxugado e avisa quando inclui paciente que deixou de ser apto. Revisão do redesenho (19 agentes, 12 achados confirmados, 11 corrigidos no front): recusar o retorno de um não apto avisa "continua não apto, ainda sem data de volta" e oferece "Tentar outra data mínima"; a sugestão mostra o código `PRE…` da lista junto com o `PTC…`; falha de carga não diz "nenhum paciente"; `?dia=` inválido volta para hoje; mensagens em região viva; lista mantida na recarga (foco do teclado); data anunciada ao trocar o dia; dias da faixa com `aria-label`; etiqueta quebra a linha em 375 px. O 12º é da API (não apto emitido antes do dia da aplicação aparece no dia da emissão), já registrado como limitação na memória da API | implementada em 2026-11-17 a partir da `feature/plano-do-dia`; build ok; testada no navegador como perfil de consulta. Revisão independente: 10 achados confirmados e corrigidos — o principal: "Sugerir retorno" numa não apta antiga agia sobre a data atual da aplicação (já remarcada) e tirava o paciente do dia novo sem avaliação; o botão saiu da lista e a nova tentativa só existe logo depois de um 422, para a mesma prescrição. Também: motivo zerado ao abrir cada diálogo, motivo só com espaços barrado no diálogo, 400 de validação mostra a mensagem do campo (`cliente.ts`, vale para todas as telas), listas não ficam presas em "Carregando" depois de erro. Na API (commit novo na `feature/nao-apto-marca-prescricoes`): as sugestões pendentes expiram também no 422 sem dia de retorno. Validada pelo autor pela tela e commitada em 2026-11-17 na `feature/agenda` (sem push) |
 | 4 | `feature/consulta-protocolos` | Protocolos e aplicações (só leitura): filtro por medicamento (na URL) e por código; uma linha por protocolo (código, medicamentos e doses, "N de M realizadas", próxima data); ao abrir (`<details>`), as aplicações com ciclo/dia, data agendada (link para a agenda do dia), nota de remarcação com a data prevista e o motivo, e a situação | implementada em 2026-11-17 a partir da `feature/agenda`; build ok; conferida no navegador (29 protocolos; `PTC2027-000101` mostra a aplicação 1 remarcada para 23/06 e as seguintes nas datas originais); validada pelo autor e commitada em 2026-11-17 (sem push) |
 | 5 | `feature/consulta-prescricoes` | Prescrições (só leitura): filtro por dia (calendário) e medicamento, na URL; uma linha por prescrição, agrupando as linhas do mesmo código (AC), com medicamentos e doses, situação, data de emissão quando diferente do dia e aviso de prescrição sem aplicação; link para a agenda do dia. Sai o componente `EmBreve` (todas as telas existem). Na validação o autor digitou o ano e a tela filtrou "01/03/0027" (cada tecla virava filtro): novo `componentes/CampoData.tsx` (só avisa a tela com ano entre 2000 e 2100), usado também na agenda e no plano do dia | implementada em 2026-11-17 a partir da `feature/consulta-protocolos`; build ok; conferida no navegador (01/03/2027: 5 prescrições, ACs agrupados); validada pelo autor e commitada em 2026-11-17; PRs mesclados em 2026-11-17 (front #1–#5, `main` em `86eb121`; API #31–#35, `master` em `97c440f`) |
+| 7 | `feature/busca-todos-medicamentos` | Agenda: "Procurar remarcações nesta semana" busca em **todos os medicamentos** de uma vez, sem o diálogo de escolha (pedido do autor, 2026-11-18); a mensagem lista as remarcações ("Encontramos N remarcações que economizam R$ X nesta semana: PTC… nº n, de seg 21/06 para ter 22/06…"). **Cabeçalho da agenda refeito (pedido do autor, 2026-11-18):** no lugar da data do dia, o intervalo da semana ("20/06 a 26/06/2027") como botão que abre o calendário nativo (`input type=date` escondido + `showPicker`, que exige clique real); as setas andam **uma semana** mantendo o dia da semana; saiu o nome do dia ao lado (o anúncio da semana ficou só para leitor de tela, `.so-leitor`); a busca virou **botão principal** "Buscar remarcações da semana" entre a faixa dos dias e a lista (só ADMIN). A faixa continua contando pacientes (aplicações) por dia | implementada em 2026-11-18 a partir da `feature/refino-visual`; `tsc` ok; conferido no navegador em 584 e 1200 px (setas 21/06 → 28/06 e volta, calendário pula para 01/03, sem rolagem horizontal, sem erros no console; o calendário aberto não aparece no print). O clique em "Buscar" grava sugestões e ficou para o autor. Precisa da API na `feature/busca-todos-medicamentos` (`medicamentoId` opcional) |
 | 6 | `feature/refino-visual` | Refino visual das cinco telas (princípios da skill `ui-ux-pro-max:ui-styling`, sem trocar a tecnologia; ver Decisões, 2026-11-17) | implementado em 2026-11-17 a partir do `main`; build ok; conferido no navegador em 1100 e 375 px como perfil de consulta (botões de ADMIN e diálogos não vistos pelo agente); validado pelo autor, commitado e enviado ao GitHub em 2026-11-17 (sem PR ainda) |
 
 ## 5. Contrato com a API, por tela
@@ -89,8 +90,8 @@ domínio (otimizações, agenda, aplicações, prescrições, protocolos, medica
   branco → 400.
 - `GET /api/users/me` → `{id, username, name, role}`. `role` vale `"ADMIN"` ou `"USER"`, sem o prefixo `ROLE_`
   (o prefixo só existe na authority interna do Spring). `name` pode vir `null` (usuário sem perfil).
-- Públicas: só `POST /api/auth/login`, `POST /api/users` e `GET /api/medicamentos` (exatamente essa rota:
-  `/api/medicamentos/{id}` e `/api/medicamentos/{id}/frascos` exigem token).
+- Pública: só `POST /api/auth/login` (desde 2026-11-17, PR #36 da API: `POST /api/users` exige ADMIN, `GET
+  /api/medicamentos` exige token e o login tem limite de 10 tentativas por minuto por IP, depois 429).
 
 ### Fase 2 — Plano do dia
 - `GET /api/medicamentos` → `{id, nome, codigoInterno}`.
@@ -111,7 +112,8 @@ domínio (otimizações, agenda, aplicações, prescrições, protocolos, medica
 ### Fase 3 — Agenda
 - `GET /api/agenda/sugestoes/previa?medicamentoId=&inicio=&fim=` → `{medicamentoId, inicio, fim, ganhoTotal, tempoMs,
   sugestoes[{aplicacaoId, codigoProtocolo, numero, origem, destino, ganho}]}` (não grava nada).
-- `POST /api/agenda/sugestoes` `{medicamentoId, inicio, fim}` → 201 + lista de `SugestaoResponse`.
+- `POST /api/agenda/sugestoes` `{medicamentoId?, inicio, fim}` → 201 + lista de `SugestaoResponse`. Sem
+  `medicamentoId` (desde 2026-11-18), todos os medicamentos num só planejamento; vale também para a prévia.
 - `GET /api/agenda/sugestoes?status=` (SUGERIDA|ACEITA|RECUSADA|EXPIRADA) → `SugestaoResponse {id, aplicacaoId,
   codigoProtocolo, numero, tipo (AGENDA|NAO_APTO), origem, destino, economiaEstimada, motivoRemarcacao, status,
   geradaEm, decididaEm, decididaPor, motivoDecisao}`. Sem filtro por medicamento: o filtro fica no front.
@@ -162,14 +164,14 @@ Administração), cabeçalho com usuário e perfil.
 
 ## 8. Como ver os dados do seed (API com o perfil `dev`)
 
-- Plano do dia: 2027-03-01 (fictício). Paclitaxel (custo 190 × 215 sem compartilhar), Doxorrubicina (540 × 570;
-  o paciente não apto fica de fora), Ciclofosfamida (68 × 76).
-- Agenda: período em torno de 2027-06-21/22 (`PTC2027-000101..110`). A aplicação `PTC2027-000110` nº 3 já foi
-  remarcada para 22/06 num teste anterior, então o banco local pode não reproduzir a sugestão original.
-
-- **Usuário de teste do agente:** `teste.front@oncotimize.test` (perfil USER), criado no banco local em 2026-11-16 por
-  `POST /api/users` para testar o login. A senha ficou fora do repositório. Para testar as ações de escrita é preciso
-  um usuário ADMIN (o autor usa o dele ou promove este pelo SQL do `AGENTS.md` da API).
+Seed refeito em 2026-11-17/18 com os frascos e preços reais (R$) da farmácia da LMECC (API `feature/dados-farmacia`,
+`6565e0a`); o banco local foi recriado do zero.
+- Plano do dia: **2027-03-01**, 5 medicamentos (Paclitaxel, Carboplatina, Ciclofosfamida, Doxorrubicina, Metotrexato);
+  o PTC2027-000006 (AC) é não apto. Ex.: Paclitaxel R$ 239,67 × 399,45 sem compartilhar.
+- Agenda: semana de **2027-06-21**: 1 paciente em 21/06 (PTC2027-000110 nº 3, janela +1) e 9 em 22/06; a busca sugere
+  juntá-lo a 22/06 (R$ 79,89). A semana de 01/03 não tem sugestões (janelas zero).
+- Usuários: `admin@oncotimize.test` (ADMIN, do seed; senha no comentário do seed) e a conta do autor. O
+  `teste.front@oncotimize.test` deixou de existir com a recriação do banco.
 
 ## 9. Perguntas em aberto
 

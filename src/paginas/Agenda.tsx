@@ -13,7 +13,6 @@ import { ErroApi } from '../api/cliente'
 import { listarMedicamentos } from '../api/plano'
 import type { AplicacaoDoDia, Medicamento, Prescricao, SugestaoRemarcacao } from '../api/tipos'
 import { useAuth } from '../auth/AuthContext'
-import CampoData from '../componentes/CampoData'
 import Dialogo from '../componentes/Dialogo'
 import { formatarData, formatarMg, formatarMoeda, hojeIso } from '../util/formatos'
 
@@ -49,7 +48,6 @@ const somarDias = (iso: string, dias: number) => {
   return paraIso(data)
 }
 const DIA_SEMANA = new Intl.DateTimeFormat('pt-BR', { weekday: 'short', timeZone: 'UTC' })
-const DIA_SEMANA_LONGO = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', timeZone: 'UTC' })
 const DIA_LONGO = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' })
 const diaCurto = (iso: string) => `${DIA_SEMANA.format(paraData(iso)).replace('.', '')} ${formatarData(iso).slice(0, 5)}`
 
@@ -158,10 +156,6 @@ export default function Agenda() {
   const [motivoVazio, setMotivoVazio] = useState(false)
   const [retornoPendente, setRetornoPendente] = useState<Paciente | null>(null)
 
-  // Diálogo "procurar remarcações da semana"
-  const [procurando, setProcurando] = useState(false)
-  const [medProcura, setMedProcura] = useState('')
-
   useEffect(() => {
     listarMedicamentos()
       .then(setMedicamentos)
@@ -214,6 +208,19 @@ export default function Agenda() {
     setMensagem(null)
     setRetornoPendente(null)
     setBusca({ dia: novoDia }, { replace: true })
+  }
+
+  const intervalo = `${formatarData(semana[0]).slice(0, 5)} a ${formatarData(semana[6])}`
+  const calendario = useRef<HTMLInputElement>(null)
+  // showPicker abre o calendário nativo; navegador sem ele recebe o foco no campo.
+  function abrirCalendario() {
+    const campo = calendario.current
+    if (!campo) return
+    try {
+      campo.showPicker()
+    } catch {
+      campo.focus()
+    }
   }
 
   const nomeDe = (id: string) => medicamentos.find((m) => m.id === id)?.nome ?? 'Medicamento'
@@ -285,9 +292,8 @@ export default function Agenda() {
     }
   }
 
-  async function procurar(evento: FormEvent) {
-    evento.preventDefault()
-    setProcurando(false)
+  // Busca em todos os medicamentos de uma vez: a API planeja tudo junto (o AC não é avaliado duas vezes).
+  async function procurar() {
     setMensagem(null)
     setRetornoPendente(null)
     if (semana[6] < hoje) {
@@ -298,14 +304,18 @@ export default function Agenda() {
     // Não sugere mover nada para trás de hoje: a busca começa no maior entre o domingo da semana e hoje.
     const inicio = semana[0] < hoje ? hoje : semana[0]
     try {
-      const novas = await gerarSugestoes(medProcura, inicio, semana[6])
+      const novas = await gerarSugestoes(inicio, semana[6])
       const total = novas.reduce((soma, s) => soma + s.economiaEstimada, 0)
+      const uma = novas.length === 1
+      const lista = novas
+        .map((s) => `${s.codigoProtocolo} nº ${s.numero}, de ${diaCurto(s.origem)} para ${diaCurto(s.destino)}`)
+        .join('; ')
       setMensagem(
         novas.length === 0
-          ? { tipo: 'aviso', texto: `Nenhuma remarcação de ${nomeDe(medProcura)} reduz o custo nesta semana.` }
+          ? { tipo: 'aviso', texto: 'Nenhuma remarcação reduz o custo nesta semana.' }
           : {
               tipo: 'sucesso',
-              texto: `${novas.length} ${novas.length === 1 ? 'sugestão' : 'sugestões'} de ${nomeDe(medProcura)}, economia estimada de ${formatarMoeda(total)}. Elas aparecem no dia de origem de cada aplicação.`,
+              texto: `Encontramos ${novas.length} ${uma ? 'remarcação que economiza' : 'remarcações que economizam'} ${formatarMoeda(total)} nesta semana: ${lista}. ${uma ? 'Ela aparece' : 'Cada uma aparece'} no dia de origem para aceitar ou recusar.`,
             },
       )
     } catch (e) {
@@ -322,16 +332,34 @@ export default function Agenda() {
       <div className="agenda-topo">
         <h1>Agenda</h1>
         <div className="agenda-dia">
-          <button type="button" className="botao-icone" aria-label="Dia anterior" onClick={() => irPara(somarDias(dia, -1))}>
+          {/* As setas andam uma semana e mantêm o dia da semana escolhido (seg 21/06 → seg 28/06). */}
+          <button type="button" className="botao-icone" aria-label="Semana anterior" onClick={() => irPara(somarDias(dia, -7))}>
             ‹
           </button>
-          {/* Campo de data nativo: um clique abre o calendário do navegador para escolher qualquer dia. */}
-          <CampoData className="agenda-dia-campo" rotulo="Escolher o dia" valor={dia} onMudar={irPara} />
-          <button type="button" className="botao-icone" aria-label="Próximo dia" onClick={() => irPara(somarDias(dia, 1))}>
+          {/* O intervalo abre o calendário do navegador (input escondido) para pular para qualquer dia. */}
+          <button type="button" className="agenda-semana-campo" onClick={abrirCalendario}>
+            <span>{intervalo}</span>
+            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="5" width="18" height="16" rx="2" />
+              <path d="M3 10h18M8 3v4M16 3v4" />
+            </svg>
+          </button>
+          <input
+            ref={calendario}
+            type="date"
+            className="agenda-calendario"
+            tabIndex={-1}
+            aria-hidden="true"
+            min="2000-01-01"
+            max="2100-12-31"
+            value={dia}
+            onChange={(e) => e.target.value && irPara(e.target.value)}
+          />
+          <button type="button" className="botao-icone" aria-label="Próxima semana" onClick={() => irPara(somarDias(dia, 7))}>
             ›
           </button>
-          <span className="agenda-dia-nome" aria-live="polite">
-            {DIA_SEMANA_LONGO.format(paraData(dia))}
+          <span className="so-leitor" aria-live="polite">
+            Semana de {intervalo}
           </span>
         </div>
       </div>
@@ -358,6 +386,14 @@ export default function Agenda() {
           </button>
         ))}
       </nav>
+
+      {ehAdmin && (
+        <div className="agenda-buscar">
+          <button type="button" className="botao-principal" disabled={ocupado} onClick={procurar}>
+            {ocupado ? 'Buscando remarcações…' : 'Buscar remarcações da semana'}
+          </button>
+        </div>
+      )}
 
       {/* Região viva sempre montada: o leitor de tela anuncia a mensagem quando ela aparece. */}
       <div aria-live="polite">
@@ -448,12 +484,6 @@ export default function Agenda() {
         </ul>
       )}
 
-      {ehAdmin && (
-        <button type="button" className="botao-link agenda-procurar" disabled={ocupado} onClick={() => setProcurando(true)}>
-          Procurar remarcações nesta semana
-        </button>
-      )}
-
       <Dialogo aberto={naoApto !== null} titulo={naoApto?.apto ? 'Paciente não apto' : 'Tentar outro retorno'} onFechar={() => setNaoApto(null)}>
         {naoApto && (
           <form onSubmit={registrar}>
@@ -500,32 +530,6 @@ export default function Agenda() {
             </div>
           </form>
         )}
-      </Dialogo>
-
-      <Dialogo aberto={procurando} titulo="Procurar remarcações" onFechar={() => setProcurando(false)}>
-        <form onSubmit={procurar}>
-          <p>
-            Semana de {formatarData(semana[0]).slice(0, 5)} a {formatarData(semana[6])}. O sistema testa mover cada aplicação
-            dentro da janela autorizada e sugere as que juntam pacientes do mesmo medicamento.
-          </p>
-          <label htmlFor="procura-medicamento">Medicamento</label>
-          <select id="procura-medicamento" required value={medProcura} onChange={(e) => setMedProcura(e.target.value)}>
-            <option value="">Escolha um medicamento</option>
-            {medicamentos.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.nome}
-              </option>
-            ))}
-          </select>
-          <div className="acoes">
-            <button type="submit" className="botao-principal">
-              Procurar
-            </button>
-            <button type="button" className="botao-secundario" onClick={() => setProcurando(false)}>
-              Voltar
-            </button>
-          </div>
-        </form>
       </Dialogo>
     </section>
   )

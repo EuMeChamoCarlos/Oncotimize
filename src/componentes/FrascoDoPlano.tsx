@@ -12,6 +12,8 @@ interface Props {
   descricao: string | null
   volumeMg: number
   partes: ParteDoFrasco[]
+  /** Só o desenho, pequeno (cartão do painel); a legenda fica no aria-label. */
+  compacto?: boolean
 }
 
 // Interior útil do desenho: y de 46 a 218 (172 de altura).
@@ -20,7 +22,7 @@ const BASE = 218
 const ALTURA = BASE - TOPO
 
 /** Frasco aberto no plano: cada prescrição é uma faixa; a sobra (descarte) fica hachurada em âmbar no topo. */
-export default function FrascoDoPlano({ rotulo, descricao, volumeMg, partes }: Props) {
+export default function FrascoDoPlano({ rotulo, descricao, volumeMg, partes, compacto = false }: Props) {
   const id = useId()
   const usado = partes.reduce((soma, parte) => soma + parte.volumeMg, 0)
   const sobra = Math.max(0, volumeMg - usado)
@@ -38,7 +40,7 @@ export default function FrascoDoPlano({ rotulo, descricao, volumeMg, partes }: P
     (sobra > 0.005 ? `; sobra de ${formatarMg(sobra)}` : '; sem sobra')
 
   return (
-    <figure className="frasco-plano">
+    <figure className={compacto ? 'frasco-plano frasco-plano-compacto' : 'frasco-plano'}>
       <svg viewBox="0 0 120 226" role="img" aria-label={descricaoAcessivel}>
         <defs>
           <clipPath id={`${id}-interior`}>
@@ -77,6 +79,7 @@ export default function FrascoDoPlano({ rotulo, descricao, volumeMg, partes }: P
         })}
       </svg>
 
+      {!compacto && (
       <figcaption>
         <p className="frasco-plano-rotulo">{rotulo}</p>
         {descricao && <p className="frasco-plano-descricao">{descricao}</p>}
@@ -93,6 +96,7 @@ export default function FrascoDoPlano({ rotulo, descricao, volumeMg, partes }: P
           </li>
         </ul>
       </figcaption>
+      )}
     </figure>
   )
 }

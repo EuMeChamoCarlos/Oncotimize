@@ -71,7 +71,7 @@ export default function Protocolos() {
           <input
             id="protocolos-codigo"
             type="search"
-            placeholder="PTC2027-000101"
+            placeholder="ex.: PTC2027-000101"
             value={codigo}
             onChange={(e) => setCodigo(e.target.value)}
           />

@@ -25,9 +25,12 @@ export async function listarSugestoes(status: StatusSugestao): Promise<SugestaoR
   return pagina.content
 }
 
-/** Roda o planejador no período e grava as sugestões; as pendentes antigas das mesmas aplicações expiram. */
-export function gerarSugestoes(medicamentoId: string, inicio: string, fim: string): Promise<SugestaoRemarcacao[]> {
-  return requisitar<SugestaoRemarcacao[]>('/api/agenda/sugestoes', { metodo: 'POST', corpo: { medicamentoId, inicio, fim } })
+/**
+ * Roda o planejador no período, com todos os medicamentos de uma vez, e grava as sugestões; as pendentes antigas
+ * das mesmas aplicações expiram.
+ */
+export function gerarSugestoes(inicio: string, fim: string): Promise<SugestaoRemarcacao[]> {
+  return requisitar<SugestaoRemarcacao[]>('/api/agenda/sugestoes', { metodo: 'POST', corpo: { inicio, fim } })
 }
 
 export function aceitarSugestao(id: string, motivo: string): Promise<SugestaoRemarcacao> {

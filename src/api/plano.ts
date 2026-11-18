@@ -1,5 +1,5 @@
 import { requisitar } from './cliente'
-import type { Frasco, Medicamento, Otimizacao, Pagina, Prescricao } from './tipos'
+import type { Frasco, Medicamento, Otimizacao, Pagina, PlanoPrevio, Prescricao } from './tipos'
 
 // Listas pequenas (um dia de um medicamento): uma página só basta.
 const parametros = (valores: Record<string, string>) => new URLSearchParams(valores).toString()
@@ -23,10 +23,16 @@ export async function listarPrescricoesDoDia(medicamentoId: string, data: string
   return pagina.content
 }
 
-/** Planos já gerados para o medicamento no dia, o mais recente primeiro. */
-export async function listarPlanosDoDia(medicamentoId: string, data: string): Promise<Otimizacao[]> {
-  const pagina = await requisitar<Pagina<Otimizacao>>(`/api/otimizacoes?${parametros({ medicamentoId, data, size: '20' })}`)
+/** Planos já gerados no dia, do medicamento ou (null) de todos, o mais recente primeiro. */
+export async function listarPlanosDoDia(medicamentoId: string | null, data: string): Promise<Otimizacao[]> {
+  const filtro: Record<string, string> = medicamentoId ? { medicamentoId, data, size: '20' } : { data, size: '200' }
+  const pagina = await requisitar<Pagina<Otimizacao>>(`/api/otimizacoes?${parametros(filtro)}`)
   return pagina.content
+}
+
+/** Prévia de cada medicamento com paciente apto no dia, calculada na hora e sem gravar. */
+export function previaDoDia(data: string): Promise<PlanoPrevio[]> {
+  return requisitar<PlanoPrevio[]>(`/api/otimizacoes/previa?${parametros({ data })}`)
 }
 
 export function gerarPlano(medicamentoId: string, data: string): Promise<Otimizacao> {

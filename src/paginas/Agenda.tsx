@@ -343,10 +343,10 @@ export default function Agenda() {
             key={d}
             type="button"
             aria-current={d === dia ? 'date' : undefined}
-            aria-label={`${DIA_LONGO.format(paraData(d))}: ${contagem[d] ?? 'carregando'} ${contagem[d] === 1 ? 'paciente' : 'pacientes'}`}
             onClick={() => irPara(d)}
           >
-            {/* Em tela estreita o "/mês" some (.semana-mes); o aria-label tem a data completa. */}
+            {/* Em tela estreita o "/mês" some (.semana-mes); o texto abaixo mantém a data completa para o leitor de tela
+                sem trocar o nome acessível pelo texto visível (o nome é a concatenação dos dois). */}
             <span className="semana-dia">
               <span>{DIA_SEMANA.format(paraData(d)).replace('.', '')}</span>{' '}
               <span>
@@ -356,6 +356,11 @@ export default function Agenda() {
             </span>
             <strong>{contagem[d] ?? '–'}</strong>
             <span className="semana-legenda">{contagem[d] === 1 ? 'paciente' : 'pacientes'}</span>
+            <span className="so-leitor">
+              {' '}
+              {DIA_LONGO.format(paraData(d))}, {contagem[d] ?? 'carregando'}{' '}
+              {contagem[d] === 1 ? 'paciente' : 'pacientes'}
+            </span>
           </button>
         ))}
       </nav>

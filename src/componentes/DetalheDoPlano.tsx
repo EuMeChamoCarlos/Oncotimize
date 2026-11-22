@@ -23,7 +23,17 @@ interface Props {
 }
 
 // Uma cor por prescrição, a mesma em todos os frascos; vizinhas alternam claro e escuro.
-export const CORES = ['#2e6670', '#9cc3c9', '#3d5a80', '#a9bedb', '#5b4b8a', '#c3b8e0', '#2f6b4f', '#a6d1b8']
+// Tokens CSS (definidos em estilos.css) para que a paleta acompanhe o tema claro/escuro sem filtros.
+export const CORES = [
+  'var(--cor-dose-1)',
+  'var(--cor-dose-2)',
+  'var(--cor-dose-3)',
+  'var(--cor-dose-4)',
+  'var(--cor-dose-5)',
+  'var(--cor-dose-6)',
+  'var(--cor-dose-7)',
+  'var(--cor-dose-8)',
+]
 
 const mensagemDe = (erro: unknown) => (erro instanceof Error ? erro.message : 'Algo deu errado. Tente de novo.')
 

@@ -27,6 +27,25 @@
   --aluminio-escuro: #8fa1a5;
   --vidro-borda: #c9d6d8;
 
+  /* texto sobre o petróleo e cor de destaque (redefinidos no tema escuro) */
+  --petroleo-texto: var(--vidro);
+  --destaque: var(--petroleo);
+  --destaque-sombra: var(--petroleo-sombra);
+
+  /* diálogo */
+  --sombra-dialogo: rgba(12, 42, 48, 0.25);
+  --backdrop-dialogo: rgba(12, 42, 48, 0.45);
+
+  /* faixas dos frascos e amostras de legenda (paleta original do painel) */
+  --cor-dose-1: #2e6670;
+  --cor-dose-2: #9cc3c9;
+  --cor-dose-3: #3d5a80;
+  --cor-dose-4: #a9bedb;
+  --cor-dose-5: #5b4b8a;
+  --cor-dose-6: #c3b8e0;
+  --cor-dose-7: #2f6b4f;
+  --cor-dose-8: #a6d1b8;
+
   /* espaço: escala de 4 px */
   --e-1: 0.25rem;
   --e-2: 0.5rem;
@@ -54,6 +73,55 @@
   --alvo: 2.75rem;
 
   color-scheme: light;
+}
+
+/* Tema escuro: o petróleo continua como identidade; as superfícies ganham camadas e o âmbar claro
+   para manter contraste. O bootstrap em index.html define data-tema antes da primeira pintura. */
+:root[data-tema='escuro'] {
+  color-scheme: dark;
+
+  --petroleo: #123c44;
+  --petroleo-sombra: #0a252b;
+  --petroleo-texto: #eaf2f3;
+  --destaque: #e0a040;
+  --destaque-sombra: #f2c274;
+
+  --vidro: #0b1e23;
+  --branco: #16333a;
+  --aco: #2b4b52;
+  --aco-escuro: #6d8a90;
+
+  --tinta: #eaf2f3;
+  --tinta-suave: #a9c4c8;
+
+  --ambar: #e0a040;
+  --ambar-claro: #f2c274;
+  --ambar-fundo: #3b2a12;
+  --ambar-texto: #f2c274;
+
+  --erro: #ff9c93;
+  --erro-fundo: #3c1e1e;
+  --ok: #8fd6a9;
+  --ok-fundo: #14382a;
+
+  --dose-1: #cfe2e5;
+  --dose-2: #86b0b7;
+  --dose-3: #537f87;
+  --aluminio: #93a7ab;
+  --aluminio-escuro: #6b8085;
+  --vidro-borda: #9fb9be;
+
+  --cor-dose-1: #3e8798;
+  --cor-dose-2: #6ba0b0;
+  --cor-dose-3: #557db0;
+  --cor-dose-4: #88a5cc;
+  --cor-dose-5: #7873b2;
+  --cor-dose-6: #a198cc;
+  --cor-dose-7: #4c9084;
+  --cor-dose-8: #85b6a5;
+
+  --sombra-dialogo: rgba(0, 0, 0, 0.6);
+  --backdrop-dialogo: rgba(0, 0, 0, 0.7);
 }
 
 *,
@@ -105,12 +173,12 @@ textarea {
 
 /* Links na cor da identidade (o roxo de "visitado" do navegador destoava). */
 a {
-  color: var(--petroleo);
+  color: var(--destaque);
   text-underline-offset: 3px;
 }
 
 a:hover {
-  color: var(--petroleo-sombra);
+  color: var(--destaque-sombra);
   text-decoration-thickness: 2px;
 }
 
@@ -130,7 +198,7 @@ button:disabled {
 
 .acesso-painel {
   background: var(--petroleo);
-  color: var(--vidro);
+  color: var(--petroleo-texto);
   padding: clamp(var(--e-6), 5vw, 4.5rem);
   display: flex;
   flex-direction: column;
@@ -171,7 +239,7 @@ button:disabled {
 
 /* Unidades do SVG (viewBox), não da página: 15 px acompanham a escala do desenho. */
 .frasco-rotulo {
-  fill: var(--vidro);
+  fill: var(--petroleo-texto);
   font-size: 15px;
   font-weight: 600;
 }
@@ -234,7 +302,7 @@ input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
   outline-offset: 0;
-  border-color: var(--petroleo);
+  border-color: var(--destaque);
 }
 
 textarea {
@@ -257,18 +325,18 @@ textarea {
 .botao-principal {
   border: 1.5px solid var(--petroleo);
   background: var(--petroleo);
-  color: var(--vidro);
+  color: var(--petroleo-texto);
 }
 
 .botao-principal:hover:not(:disabled) {
-  border-color: var(--petroleo-sombra);
+  border-color: var(--destaque-sombra);
   background: var(--petroleo-sombra);
 }
 
 .botao-secundario {
   border: 1.5px solid var(--petroleo);
   background: var(--branco);
-  color: var(--petroleo);
+  color: var(--destaque);
 }
 
 .botao-secundario:hover:not(:disabled) {
@@ -294,7 +362,7 @@ textarea {
 }
 
 .botao-icone:hover {
-  border-color: var(--petroleo);
+  border-color: var(--destaque);
   background: var(--vidro);
 }
 
@@ -302,7 +370,7 @@ textarea {
   padding: 0;
   border: 0;
   background: none;
-  color: var(--petroleo);
+  color: var(--destaque);
   font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -310,7 +378,7 @@ textarea {
 }
 
 .botao-link:hover:not(:disabled) {
-  color: var(--petroleo-sombra);
+  color: var(--destaque-sombra);
   text-decoration-thickness: 2px;
 }
 
@@ -355,7 +423,7 @@ textarea {
   z-index: 10;
   padding: var(--e-2) var(--e-4);
   background: var(--branco);
-  color: var(--petroleo);
+  color: var(--destaque);
   border-radius: var(--raio);
 }
 
@@ -379,7 +447,7 @@ textarea {
   gap: var(--e-6);
   padding: var(--e-5) var(--e-4);
   background: var(--petroleo);
-  color: var(--vidro);
+  color: var(--petroleo-texto);
 }
 
 .marca {
@@ -426,14 +494,14 @@ textarea {
 
 .lateral nav a:hover {
   background: rgba(255, 255, 255, 0.06);
-  color: var(--branco);
+  color: var(--petroleo-texto);
 }
 
 .lateral nav a.active {
   border-left-color: var(--ambar-claro);
   background: rgba(255, 255, 255, 0.1);
   font-weight: 700;
-  color: var(--branco);
+  color: var(--petroleo-texto);
 }
 
 /* Sobre o petróleo o âmbar escuro fica no limite (3:1); o claro dá 5,3:1. */
@@ -458,6 +526,43 @@ textarea {
   overflow-wrap: anywhere;
 }
 
+/* Dois ícones na área da conta, com o mesmo tratamento do botão Sair. */
+.sessao-tema {
+  display: flex;
+  gap: var(--e-1);
+  margin-top: var(--e-3);
+}
+
+.botao-tema {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 1.5px solid var(--dose-3);
+  border-radius: var(--raio);
+  background: transparent;
+  color: var(--dose-1);
+  cursor: pointer;
+}
+
+.botao-tema svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.botao-tema:hover {
+  border-color: var(--dose-2);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--petroleo-texto);
+}
+
+.botao-tema[aria-pressed='true'] {
+  border-color: var(--ambar-claro);
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--ambar-claro);
+}
+
 .botao-sair {
   min-height: 2.25rem;
   margin-top: var(--e-3);
@@ -465,7 +570,7 @@ textarea {
   border: 1.5px solid var(--dose-3);
   border-radius: var(--raio);
   background: transparent;
-  color: var(--vidro);
+  color: var(--petroleo-texto);
   cursor: pointer;
 }
 
@@ -649,12 +754,13 @@ textarea {
   padding: var(--e-5);
   border: 0;
   border-radius: var(--raio);
+  background: var(--branco);
   color: var(--tinta);
-  box-shadow: 0 12px 40px rgba(12, 42, 48, 0.25);
+  box-shadow: 0 12px 40px var(--sombra-dialogo);
 }
 
 .dialogo::backdrop {
-  background: rgba(12, 42, 48, 0.45);
+  background: var(--backdrop-dialogo);
 }
 
 .dialogo h2 {
@@ -720,7 +826,7 @@ textarea {
 }
 
 .calendario-botao:hover {
-  border-color: var(--petroleo);
+  border-color: var(--destaque);
   background: var(--vidro);
 }
 
@@ -785,13 +891,13 @@ textarea {
 }
 
 .semana button[aria-current='date'] {
-  border-color: var(--petroleo);
+  border-color: var(--destaque);
   background: var(--petroleo);
   color: var(--dose-1);
 }
 
 .semana button[aria-current='date'] strong {
-  color: var(--branco);
+  color: var(--petroleo-texto);
 }
 
 /* Sugestão de remarcação: cartão âmbar com borda inteira (era uma faixa lateral). */
@@ -880,7 +986,7 @@ textarea {
 }
 
 .painel-resumo-destaque dd {
-  color: var(--petroleo);
+  color: var(--destaque);
 }
 
 .filtro-chips {
@@ -904,13 +1010,13 @@ textarea {
 }
 
 .chip:hover {
-  border-color: var(--petroleo);
+  border-color: var(--destaque);
 }
 
 .chip[aria-pressed='true'] {
-  border-color: var(--petroleo);
+  border-color: var(--destaque);
   background: var(--petroleo);
-  color: var(--vidro);
+  color: var(--petroleo-texto);
 }
 
 .cartoes {
@@ -971,7 +1077,7 @@ textarea {
 }
 
 .cartao-plano-numeros span {
-  color: var(--petroleo);
+  color: var(--destaque);
   font-weight: 600;
 }
 
@@ -1040,7 +1146,7 @@ textarea {
   margin: var(--e-1) 0;
   font-size: var(--t-gg);
   line-height: 1.1;
-  color: var(--petroleo);
+  color: var(--destaque);
 }
 
 /* ---------- Consulta de protocolos ---------- */
@@ -1138,6 +1244,11 @@ textarea {
     grid-template-columns: 1fr;
   }
 
+  /* O formulário sobe na tela estreita; a ilustração fica abaixo, sem empurrar os campos para a segunda dobra. */
+  .acesso-formulario {
+    order: -1;
+  }
+
   .acesso-painel {
     padding: var(--e-5) var(--e-4);
     gap: var(--e-3);
@@ -1203,6 +1314,11 @@ textarea {
     align-items: center;
     gap: var(--e-1) var(--e-4);
     padding-top: var(--e-3);
+  }
+
+  .sessao-tema {
+    flex: 0 0 auto;
+    margin-top: 0;
   }
 
   .sessao-email {
@@ -1309,5 +1425,22 @@ textarea {
 
   .protocolos summary::before {
     transition: none;
+  }
+}
+
+/* Celular baixo: menos altura para a ilustração, deixando o formulário mais à vista. */
+@media (max-width: 760px) and (max-height: 700px) {
+  .acesso-painel {
+    padding-block: var(--e-3);
+  }
+
+  .frasco {
+    width: min(100%, 11rem);
+    margin-block: 0;
+  }
+
+  /* Com o frasco menor, o texto do viewBox acompanha para continuar legível. */
+  .frasco-rotulo {
+    font-size: 18px;
   }
 }
